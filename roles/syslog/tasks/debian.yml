@@ -1,0 +1,18 @@
+---
+
+- name: Install syslog
+  apt: name="{{ item }}"
+  with_items:
+    - rsyslog
+
+- name: Assemble config
+  template: src=rsyslog.conf.j2 dest=/etc/rsyslog.conf
+  notify: 'restart syslog'
+
+- name: Prepare folder to store logs
+  file: path={{ syslog.nodes_logs_path }} state=directory
+  when: syslog.master is defined
+
+- name: Assemble logrotate
+  template: src=logrotate.j2 dest=/etc/logrotate.d/rsyslog-nodes
+  when: syslog.master is defined

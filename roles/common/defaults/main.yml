@@ -1,0 +1,7 @@
+---
+
+swap:
+  path: /mnt/swap
+  size: "{{ (ansible_memtotal_mb * 1024)|int }}"
+
+timezone: 'Europe/Moscow'

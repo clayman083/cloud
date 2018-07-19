@@ -1,0 +1,24 @@
+---
+
+version: '3.3'
+
+networks:
+  backend:
+    external:
+      name: {{ registry.network }}
+
+services:
+  server:
+    image: {{ registry.image }}
+    container_name: {{ registry.container }}
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "unixgram:///dev/log"
+        tag: {{ registry.container }}
+    networks:
+      - backend
+    restart: always
+    volumes:
+      - /var/containers/registry:/var/lib/registry
+      - ./config.yml:/etc/docker/registry/config.yml

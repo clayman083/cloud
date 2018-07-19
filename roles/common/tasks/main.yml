@@ -1,0 +1,32 @@
+---
+
+- name: Install required packages
+  apt: name="{{ item }}" state=latest update_cache=yes
+  with_items:
+    - apt-transport-https
+    - binutils
+    - curl
+    - gcc
+    - git
+    - iptables
+    - nano
+    - mc
+    - net-tools
+    - tmux
+    - vim
+    - zsh
+
+- name: Configure timezone
+  shell: echo "{{ timezone }}" > /etc/timezone
+  when: "ansible_distribution == 'Debian'"
+  notify: 'apply timezone'
+
+- name: return motd to registered var
+  command: "cp /usr/share/zoneinfo/{{ timezone }} /etc/localtime"
+  when: "ansible_distribution == 'Debian'"
+  notify: 'apply timezone'
+
+- include_tasks: swap.yml
+
+- include_tasks: ssh.yml
+  when: "ansible_distribution == 'Debian'"

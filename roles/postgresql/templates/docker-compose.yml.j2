@@ -1,0 +1,43 @@
+--- 
+
+version: '3.3'
+
+networks:
+  postgres:
+    external:
+      name: backend
+
+{% if env == 'local' %}
+volumes:
+  postgres_data:
+{% endif %}
+
+services:
+{% if env == 'local' %}
+  server:
+    container_name: postgresql
+    image: postgres:alpine
+    ports:
+      - "{{ private_network['address'] }}:5432:5432"
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql
+{% endif %}
+
+  exporter:
+    container_name: postgres_exporter
+    image: wrouesnel/postgres_exporter
+    dns: {{ private_network.address }}
+    env_file: .env
+    networks:
+      - postgres
+{% if env != 'local' %}
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "unixgram:///dev/log"
+        tag: postgres_exporter
+{% endif %}
+    ports:
+      - "{{ private_network['address'] }}:9187:9187"
+    restart: always

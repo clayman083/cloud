@@ -1,0 +1,40 @@
+---
+
+- name: Add repo key
+  apt_key:
+    url: "https://www.postgresql.org/media/keys/ACCC4CF8.asc"
+    state: present
+
+- name: Add repo
+  apt_repository:
+    repo: "deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main"
+    state: present
+
+- name: Add sources repo
+  apt_repository:
+    repo: "deb-src http://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main"
+    state: present
+
+- name: Install postgresql from repo
+  apt: name="{{ item }}" update_cache=yes state=present
+  with_items:
+    - "postgresql-{{ postgresql.version }}"
+    - "postgresql-common"
+    - "postgresql-server-dev-{{ postgresql.version }}"
+    - "postgresql-contrib-{{ postgresql.version }}"
+    - "python-psycopg2"
+
+- name: Assemble configs
+  template: src="{{ item }}.j2" dest="/etc/postgresql/{{ postgresql.version }}/main/{{ item }}"
+  with_items:
+    - postgresql.conf
+    - pg_hba.conf
+  notify: restart postgres
+
+- name: Prepare folders
+  file: path="{{ item }}" state=directory
+  with_items:
+    - "{{ services_dir }}/consul/conf.d"
+
+- name: Assemble service config
+  template: src="consul.json.j2" dest="{{ services_dir }}/consul/conf.d/postgresql.json"

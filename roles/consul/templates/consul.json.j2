@@ -1,0 +1,18 @@
+{
+  "services": [
+    {
+      "name": "consul-exporter",
+      "tags": ["exporters", "consul"],
+      "address": "{{ private_network['address'] }}",
+      "port": 9107,
+      "checks": [
+        {
+          "id": "consul_exporter_check",
+          "name": "Prometheus consul exporter health check",
+          "http": "http://{{ private_network['address'] }}:9107",
+          "interval": "20s"
+        }
+      ]
+    }
+  ]
+}

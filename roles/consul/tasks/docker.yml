@@ -1,0 +1,22 @@
+---
+
+- name: Prepare folders
+  file: path={{ item }} state=directory
+  with_items:
+    - "{{ services_dir }}/consul"
+    - "{{ services_dir }}/consul/conf.d"
+
+- name: Assemble config files
+  template: src={{ item.src }}.j2 dest={{ item.dest }}
+  with_items:
+    - src: config.json
+      dest: "{{ services_dir }}/consul/config.json"
+    - src: consul.json
+      dest: "{{ services_dir }}/consul/conf.d/consul.json"
+    - src: docker-compose.yml
+      dest: "{{ services_dir }}/consul/docker-compose.yml"
+
+- name: Run service
+  shell: docker-compose up -d chdir={{ services_dir }}/consul
+  when: env == 'local'
+

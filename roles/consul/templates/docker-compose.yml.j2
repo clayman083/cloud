@@ -1,0 +1,52 @@
+---
+
+version: '3.3'
+
+networks:
+  consul:
+    external:
+      name: {{ consul.network|default('backend') }}
+
+volumes:
+  consul_data:
+
+services:
+  server:
+    container_name: consul
+    hostname: {{ ansible_hostname }}
+    image: {{ consul.image }}
+    command: consul agent -config-file /etc/consul/config.json -config-dir /etc/consul/conf.d
+    networks:
+      - consul
+{% if env != 'local' %}
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "unixgram:///dev/log"
+        tag: consul
+{% endif %}
+    ports:
+{% if env == 'local' %}
+      - {{ private_network.address }}:8500:8500
+{% endif %}
+      - {{ private_network.address }}:8600:8600/udp
+    volumes:
+      - ./:/etc/consul
+      - consul_data:/consul/data
+
+  exporter:
+    container_name: consul_exporter
+    image: {{ consul_exporter.image }}
+    dns: {{ private_network.address }}
+    command: --consul.server={{ consul.service }}:8500
+    networks:
+      - consul
+{% if env != 'local' %}
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "unixgram:///dev/log"
+        tag: consul_exporter
+{% endif %}
+    ports:
+      - {{ private_network.address }}:9107:9107

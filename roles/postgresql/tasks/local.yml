@@ -1,0 +1,58 @@
+---
+
+- name: Prepare folders
+  file: path={{ item }} state=directory
+  with_items:
+    - "{{ services_dir }}/postgresql"
+    - "{{ services_dir }}/consul/conf.d"
+  tags:
+    - postgresql
+
+- name: Assemble config files
+  template: src={{ item.src }}.j2 dest={{ item.dest }}
+  with_items:
+    - src: .env
+      dest: "{{ services_dir }}/postgresql/.env"
+    - src: docker-compose.yml
+      dest: "{{ services_dir }}/postgresql/docker-compose.yml"
+    - src: consul.json
+      dest: "{{ services_dir }}/consul/conf.d/postgresql.json"
+  tags:
+    - postgresql
+
+- name: Run service
+  shell: docker-compose up -d chdir={{ services_dir }}/postgresql
+  tags:
+    - postgresql
+
+- name: Wait for postgresql container ready
+  wait_for:
+    host: "{{ private_network.address }}"
+    port: 5432
+    delay: 5
+  tags:
+    - postgresql
+
+- name: Create users
+  postgresql_user:
+    name: "{{ item.value.user }}"
+    password: "{{ item.value.password }}"
+    encrypted: yes
+    login_host: "{{ private_network.address }}"
+    login_user: "postgres"
+    login_password: "postgres"
+  with_dict: "{{ postgresql.users }}"
+  tags:
+    - postgresql
+
+- name: Create database
+  postgresql_db:
+    name: "{{ item.value.name }}"
+    encoding: UTF-8
+    owner: "{{ item.value.owner }}"
+    login_host: "{{ private_network.address }}"
+    login_user: "postgres"
+    login_password: "postgres"
+  with_dict: "{{ postgresql.databases }}"
+  tags:
+    - postgresql

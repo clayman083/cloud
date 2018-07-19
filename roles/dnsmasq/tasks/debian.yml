@@ -1,0 +1,18 @@
+---
+
+- name: Install dnsmasq
+  apt: 
+    name: dnsmasq
+
+- name: Create folders
+  file: path=/etc/dnsmasq.d state=directory
+ 
+- name: Update config file
+  template: src=dnsmasq.conf.j2 dest=/etc/dnsmasq.conf
+  notify: restart dnsmasq debian
+
+- name: Assemble configs
+  template: src=conf.d/{{ item }}.j2 dest=/etc/dnsmasq.d/{{ item }}
+  notify: restart dnsmasq macos
+  with_items:
+    - consul.conf

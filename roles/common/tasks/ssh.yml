@@ -1,0 +1,25 @@
+---
+
+- name: Permit root login via sshd
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: 'PermitRootLogin yes'
+    line: 'PermitRootLogin no'
+  notify: 'restart sshd'
+
+- name: Setup authkeys path
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: '#?AuthorizedKeysFile	%h/.ssh/authorized_keys'
+    line: 'AuthorizedKeysFile	%h/.ssh/authorized_keys'
+  notify: 'restart sshd'
+
+- name: Disable password authentication
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    state: present
+    regexp: '#?PasswordAuthentication yes'
+    line: 'PasswordAuthentication no'
+  notify: 'restart sshd'

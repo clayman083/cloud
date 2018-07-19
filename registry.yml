@@ -1,0 +1,20 @@
+---
+
+- hosts: localhost
+  vars_files:
+    - 'environments/digitalocean/credentials.yml'
+
+  roles:
+    - role: digitalocean
+      tags:
+        - loadbalancer
+        - registry
+
+
+- hosts: droplets
+  vars_files:
+    - 'environments/digitalocean/credentials.yml'
+
+  roles:
+    - role: loadbalancer
+    - role: registry

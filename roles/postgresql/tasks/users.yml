@@ -1,0 +1,10 @@
+---
+
+- name: Create users
+  postgresql_user:
+    name: "{{ item.value.user }}"
+    password: "{{ item.value.password }}"
+    encrypted: yes
+  become: true
+  become_user: postgres
+  with_dict: "{{ postgresql.users }}"

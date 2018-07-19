@@ -1,0 +1,27 @@
+{
+  "services": [
+    {
+      "name": "postgresql",
+      "tags": ["primary"],
+      "address": "{{ private_network['address'] }}",
+      "meta": {
+        "meta": "Database server"
+      },
+      "port": 5432
+    },
+    {
+      "name": "postgres-exporter",
+      "tags": ["exporters", "postgresql"],
+      "address": "{{ private_network['address'] }}",
+      "port": 9187,
+      "checks": [
+        {
+          "id": "postgres_exporter_check",
+          "name": "Postgresql prometheus exporter health check",
+          "http": "http://{{ private_network['address'] }}:9187",
+          "interval": "20s"
+        }
+      ]
+    }
+  ] 
+}

@@ -1,0 +1,11 @@
+---
+
+- import_tasks: debian.yml
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+  tags:
+    - dnsmasq
+
+- import_tasks: macos.yml
+  when: ansible_os_family == 'Darwin'
+  tags:
+    - dnsmasq

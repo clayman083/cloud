@@ -1,0 +1,51 @@
+---
+
+- name: Ensure ssh key exists
+  user: name={{ ansible_user_id }} generate_ssh_key=yes ssh_key_file=.ssh/id_rsa
+
+- name: Ensure key exists at DigitalOcean
+  digital_ocean: >
+    state=present
+    command=ssh
+    name={{ digitalocean.ssh_key }}
+    ssh_pub_key={{ lookup('file', '~/.ssh/id_rsa.pub') }}
+    api_token={{ digitalocean.token }}
+  register: ssh_key
+
+- name: Ensure droplet exists
+  digital_ocean: >
+    state=present
+    command=droplet
+    name={{ item }}
+    image_id={{ hostvars[item].image|default(digitalocean.image) }}
+    region_id={{ hostvars[item].region|default(digitalocean.region) }}
+    size_id={{ hostvars[item].size|default(digitalocean.size) }}
+    private_networking=yes
+    unique_name=yes
+    ssh_key_ids={{ ssh_key.ssh_key.id }}
+    api_token={{ digitalocean.token }}
+  register: droplets
+  with_items: "{{ digitalocean.droplets }}"
+
+- name: Associate ip address with hosts
+  set_fact:
+    ansible_ssh_host: "{{ droplets.results[item.0].droplet.ip_address }}"
+    ansible_ssh_port: 22
+    ansible_ssh_user: "{{ hostvars[item.1]['ansible_ssh_user']|default(digitalocean.provision_user) }}"
+  delegate_to: "{{ item.1 }}"
+  delegate_facts: True
+  with_indexed_items: "{{ digitalocean.droplets }}"
+  changed_when: false
+
+- name: Wait for ssh
+  wait_for:
+    host: "{{ hostvars[item]['ansible_ssh_host'] }}"
+    port: "{{ hostvars[item]['ansible_ssh_port'] }}"
+    timeout: 30
+    connect_timeout: 30
+  with_items: "{{ digitalocean.droplets }}"
+
+- name: Make sure ssh is really up
+  ping:
+  delegate_to: "{{ item }}"
+  with_items: "{{ digitalocean.droplets }}"

@@ -1,0 +1,22 @@
+---
+
+# Consul settings
+consul:
+  # Container 
+  image: consul:1.2.1
+  network: backend
+  
+  # Agent 
+  server: false
+  ui: false
+
+  service: consul.service.consul
+
+  # Loadbalancer 
+  domain: consul.dev
+  web:
+    user: consul
+    password: consul
+
+consul_exporter:
+  image: prom/consul-exporter:v0.3.0

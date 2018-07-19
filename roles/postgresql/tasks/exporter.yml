@@ -1,0 +1,39 @@
+---
+
+- name: Create schema for postgresql exporter
+  postgresql_schema:
+    name: "{{ postgresql_exporter.schema }}"
+    owner: "{{ postgresql_exporter.user }}"
+  become: true
+  become_user: postgres
+
+- name: Create view for pg_stat_activity
+  command: "psql -c \"CREATE OR REPLACE VIEW {{ postgresql_exporter.schema }}.pg_stat_activity AS SELECT * FROM pg_catalog.pg_stat_activity;\""
+  become: true
+  become_user: postgres
+
+- name: Grant access
+  command: "psql -c \"GRANT SELECT ON {{ postgresql_exporter.schema }}.pg_stat_activity TO {{ postgresql_exporter.user }};\""
+  become: true
+  become_user: postgres
+
+- name: Create view for pg_stat_replication
+  command: "psql -c \"CREATE OR REPLACE VIEW {{ postgresql_exporter.schema }}.pg_stat_replication AS SELECT * FROM pg_catalog.pg_stat_replication;\""
+  become: true
+  become_user: postgres
+
+- name: Grant access
+  command: "psql -c \"GRANT SELECT ON {{ postgresql_exporter.schema }}.pg_stat_replication TO {{ postgresql_exporter.user }};\""
+  become: true
+  become_user: postgres
+
+- name: Prepare folder
+  file: path={{ services_dir }}/postgresql/ state=directory
+
+- name: Assemble service config
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ services_dir }}/postgresql/{{ item }}"
+  with_items:
+    - .env
+    - docker-compose.yml

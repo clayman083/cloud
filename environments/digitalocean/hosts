@@ -1,0 +1,4 @@
+localhost ansible_connection=local
+
+[droplets]
+alpha region="sgp1"

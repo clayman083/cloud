@@ -1,0 +1,12 @@
+---
+
+# Example settings for logging master
+# syslog:
+#   master: no
+#   nodes_logs_path: /var/log/nodes
+
+# Example settings for logging slaves
+# syslog:
+#   remote:
+#     host: "{{ hostvars[groups['logging'][0]]['private_network']['address'] }}"
+#     port: 514

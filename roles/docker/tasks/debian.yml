@@ -1,0 +1,49 @@
+---
+
+- name: Install required packages
+  apt: name={{ item }} update_cache=yes force=yes
+  with_items:
+    - apt-transport-https
+    - ca-certificates
+    - openssl
+    - python-pip
+
+- name: Add repo key
+  apt_key: url=https://download.docker.com/linux/debian/gpg state=present
+
+- name: Add docker.io repo
+  apt_repository: repo='deb [arch=amd64] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable' state=present
+
+- name: Install docker
+  apt: name=docker-ce update_cache=yes force=yes
+
+- name: Remove docker rc
+  file: path=/etc/init.d/docker state=absent
+
+- name: Create folders for containers
+  file: path={{ item }} state=directory
+  with_items:
+    - /var/containers/
+    - /var/log/containers/
+
+- name: Install python library
+  pip: name=docker-py
+
+- import_tasks: certs.yml
+
+- name: Assemble daemon config
+  template: src=daemon.json.j2 dest=/etc/docker/daemon.json
+  notify: "restart docker service"
+
+- name: Create systemd config
+  template: src=docker.service.j2 dest=/etc/systemd/system/docker.service mode=0644
+  notify: "restart docker service"
+
+- name: Download docker-compose
+  get_url:
+    url: "https://github.com/docker/compose/releases/download/1.21.2/docker-compose-{{ ansible_system }}-{{ ansible_userspace_architecture }}"
+    dest: /usr/local/bin/docker-compose
+    mode: u=rwx,g=rx,o=rx
+    owner: root
+    group: root
+    checksum: sha256:8a11713e11ed73abcb3feb88cd8b5674b3320ba33b22b2ba37915b4ecffdf042

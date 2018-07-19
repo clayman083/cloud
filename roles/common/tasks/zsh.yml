@@ -1,0 +1,35 @@
+---
+
+- name: Install zsh
+  apt: name="{{ item }}"
+  with_items:
+    - zsh
+
+- name: Clone oh-my-zsh
+  git:
+    repo: https://github.com/robbyrussell/oh-my-zsh
+    dest: "/home/{{ item }}/.oh-my-zsh"
+  with_items: "{{ users }}"
+
+- name: Create new ~/.oh-my-zsh
+  copy:
+    src: "/home/{{ item }}/.oh-my-zsh/templates/zshrc.zsh-template"
+    dest: "/home/{{ item }}/.zshrc"
+    remote_src: yes
+    backup: yes
+  with_items: "{{ users }}"
+
+- name: Load oh-my-zsh theme
+  get_url:
+    url: https://raw.githubusercontent.com/oskarkrawczyk/honukai-iterm-zsh/master/honukai.zsh-theme
+    dest: "/home/{{ item }}/.oh-my-zsh/themes/honukai.zsh-theme"
+    mode: 644
+  with_items: "{{ users }}"
+
+- name: Install theme
+  lineinfile:
+    dest: "/home/{{ item }}/.zshrc"
+    state: present
+    regexp: "^ZSH_THEME="
+    line: 'ZSH_THEME="honukai"'
+  with_items: "{{ users }}"

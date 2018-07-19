@@ -1,0 +1,7 @@
+---
+
+- import_tasks: docker.yml
+  when: consul is defined
+  tags: 
+    - consul
+

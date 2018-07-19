@@ -1,0 +1,45 @@
+---
+
+credentials_path: "./environments/.credentials"
+
+superuser:
+  name: "clayman"
+  group: "clayman"
+
+
+# Docker networks settings
+networks:
+  backend:
+    name: backend
+
+
+# Passport settings
+passport:
+  domain: passport.clayman.pro
+
+  image: registry.clayman.pro/passport:latest
+  replicas: 1
+
+  consul:
+    host: consul.service.consul
+
+  database:
+    host: postgresql.service.consul
+    port: 5432
+    name: passport
+
+
+# Wallet settings
+wallet:
+  domain: wallet.clayman.pro
+
+  image: registry.clayman.pro/wallet:latest
+  replicas: 1
+
+  consul:
+    host: consul.service.consul
+
+  database:
+    host: postgresql.service.consul
+    port: 5432
+    name: wallet

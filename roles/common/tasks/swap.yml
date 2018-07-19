@@ -1,0 +1,30 @@
+---
+
+- name: Check swap exists
+  shell: swapon --show | grep {{ swap.path }}
+  ignore_errors: yes
+  register: swap_exist
+
+- name: Create swap space
+  command: dd if=/dev/zero of={{ swap.path }} bs=1024 count={{ swap.size }}
+  when: swap_exist.stdout.find(swap.path) == -1
+
+- name: Make swap chown
+  command: chown root:root {{ swap.path }}
+  when: swap_exist.stdout.find(swap.path) == -1
+
+- name: Make swap chmod
+  command: chmod 0600 {{ swap.path }}
+  when: swap_exist.stdout.find(swap.path) == -1
+
+- name: Make swap
+  command: mkswap {{ swap.path }}
+  when: swap_exist.stdout.find(swap.path) == -1
+
+- name: Add to fstab
+  action: lineinfile dest=/etc/fstab regexp="{{ swap.path }}" line="{{ swap.path }} none swap sw 0 0" state=present
+  when: swap_exist.stdout.find(swap.path) == -1
+
+- name: Turn swap on
+  command: swapon {{ swap.path }}
+  when: swap_exist.stdout.find(swap.path) == -1

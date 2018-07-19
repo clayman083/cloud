@@ -1,0 +1,9 @@
+---
+
+- name: restart sshd
+  systemd: name=sshd state=restarted
+  listen: "restart sshd"
+
+- name: apply timezone
+  shell: /usr/sbin/dpkg-reconfigure -f noninteractive tzdata
+  listen: "apply timezone"

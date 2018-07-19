@@ -1,0 +1,12 @@
+{{ syslog.nodes_logs_path }}/**/*.log {
+    daily
+    rotate 30
+    copytruncate
+    delaycompress
+    compress
+    notifempty
+    missingok
+    postrotate
+        invoke-rc.d rsyslog rotate > /dev/null
+    endscript
+}

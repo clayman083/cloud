@@ -1,0 +1,68 @@
+---
+
+- hosts: localhost
+  roles:
+    - role: digitalocean
+
+  tasks:
+    - name: Create folders for credentials
+      file: path="{{ credentials_path }}/{{ item[1] }}/{{ item[0] }}" state=directory
+      with_nested:
+        - ["{{ superuser.name }}"]
+        - "{{ groups['droplets'] }}"
+
+    - name: Generate superuser SSH keys
+      shell: "ssh-keygen -b 2048 -t rsa -f {{ credentials_path }}/{{ item[1] }}/{{ item[0] }}/id_rsa -q -N \"\""
+      args:
+        creates: "{{ credentials_path }}/{{ item[1] }}/{{ item[0] }}/id_rsa"
+      with_nested:
+        - ["{{ superuser.name }}"]
+        - "{{ groups['droplets'] }}"
+
+
+- hosts: droplets
+  roles:
+    - role: common
+    - role: docker
+    - role: syslog
+
+  tasks:
+    - name: Add admin group
+      group: name="{{ superuser.group }}" state=present
+
+    - name: Allow admin group to have passwordless sudo
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: '{{ superuser.group }}'
+        line: '%{{ superuser.group }} ALL=(ALL) NOPASSWD: ALL'
+
+    - name: Add superuser
+      user:
+        name: "{{ superuser.name }}"
+        password: "{{ lookup('password', '{{ credentials_path }}/{{ inventory_hostname }}/{{ superuser.name }}/auth_password length=32')|password_hash('sha512') }}"
+        shell: /bin/zsh
+        groups: "{{ superuser.group }}"
+        append: yes
+
+    - name: Add user authorized key
+      authorized_key:
+        user: "{{ item }}"
+        state: present
+        key: "{{ lookup('file', '{{ credentials_path }}/{{ inventory_hostname }}/{{ item }}/id_rsa.pub') }}"
+      with_items:
+        - "{{ superuser.name }}"
+
+    - import_role:
+        name: common
+        tasks_from: zsh
+      vars:
+        users:
+          - "{{ superuser.name }}"
+
+    - name: Fetch client certificates
+      fetch: src=/etc/docker/{{ item }} dest={{ credentials_path }}/{{ inventory_hostname }}/docker/{{ item }} flat=yes
+      with_items:
+        - ca.pem
+        - client-key.pem
+        - client.pem

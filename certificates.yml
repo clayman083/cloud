@@ -1,0 +1,51 @@
+---
+
+- hosts: localhost
+  vars_files:
+    - 'environments/digitalocean/credentials.yml'
+
+  roles:
+    - role: digitalocean
+      tags:
+        - loadbalancer
+        - certs
+
+
+- hosts: droplets
+  vars_files:
+    - 'environments/digitalocean/credentials.yml'
+
+  roles:
+    - role: loadbalancer
+
+  tasks:
+    - name: Generate ssl certificates
+      shell: docker run --rm -v /etc/letsencrypt:/etc/letsencrypt -v /var/www:/var/www certbot/certbot certonly -n --agree-tos -m {{ loadbalancer.owner }} --webroot -w /var/www -d {{ item.value.domains|join(' -d ') }}
+      args:
+        creates: "/etc/letsencrypt/live/{{ item.value.domains[0] }}/cert.pem"
+      with_dict: "{{ loadbalancer.domains }}"
+      when: loadbalancer.domains and loadbalancer.owner
+      tags:
+        - certs
+
+    - name: Add cron task to renew certificates
+      cron:
+        name: "renew letsencrypt certificates"
+        job: "docker run --rm -v /etc/letsencrypt:/etc/letsencrypt -v /var/www:/var/www certbot/certbot renew >> /var/log/le-renew.log"
+        weekday: 1
+        hour: 2
+        minute: 30
+      when: loadbalancer.domains and loadbalancer.owner
+      tags:
+        - certs
+
+    - name: Add cron task to reload nginx
+      cron:
+        name: "reload loadbalancer after renew"
+        job: "docker restart loadbalancer"
+        weekday: 1
+        hour: 2
+        minute: 35
+      when: loadbalancer.domains and loadbalancer.owner
+      tags:
+        - certs

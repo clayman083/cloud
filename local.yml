@@ -1,0 +1,22 @@
+---
+
+- hosts: localhost
+  
+  roles:
+    - role: dnsmasq
+    - role: consul
+    - role: loadbalancer
+
+  tasks:
+    - import_role:
+        name: consul
+        tasks_from: loadbalancer
+      when: consul is defined
+      tags:
+        - loadbalancer
+
+    - import_role:
+        name: postgresql
+        tasks_from: local
+      tags:
+        - postgresql
