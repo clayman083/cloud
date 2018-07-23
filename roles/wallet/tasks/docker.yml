@@ -1,0 +1,22 @@
+---
+
+- name: Prepare folders
+  file: path={{ item }} state=directory
+  with_items:
+    - "{{ services_dir }}/wallet"
+
+- name: Assemble docker-compose
+  template: src={{ item }}.j2 dest={{ services_dir }}/wallet/{{ item }}
+  with_items:
+    - .env
+    - docker-compose.yml
+
+# - name: Check stack
+#   shell: docker stack ls
+#   register: output
+
+# - name: Create stack if not exist
+#   shell: docker stack deploy -c docker-compose.yml wallet
+#   args:
+#     chdir: "{{ services_dir }}/wallet"
+#   when: output.stdout.find('wallet') == -1

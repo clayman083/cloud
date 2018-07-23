@@ -1,0 +1,40 @@
+---
+
+version: '3.3'
+
+networks:
+  backend:
+    external:
+      name: backend
+
+services:
+  server:
+    image: {{ passport.image }}
+    dns: {{ private_network.address }}
+    env_file: .env
+    networks:
+      - backend
+{% if env != 'local' %}
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "unixgram:///dev/log"
+        tag: passport
+{% endif %}
+
+    deploy:
+      mode: replicated
+      replicas: {{ passport.replicas }}
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 64M
+      update_config:
+        parallelism: 1
+        failure_action: rollback
+        delay: 30s
+      restart_policy:
+        condition: any
+        delay: 5s
+        window: 120s

@@ -1,0 +1,6 @@
+---
+
+- name: Update database schema
+  shell: docker-compose run server psql -h {{ wallet.database.host }} -U {{ wallet.database.user }} -d {{ wallet.database.name }} -f /usr/share/wallet/upgrade_schema.sql
+  args:
+    chdir: "{{ services_dir }}/wallet"

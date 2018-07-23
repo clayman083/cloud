@@ -1,13 +1,19 @@
 ---
 
 - hosts: localhost
-  
+
   roles:
     - role: dnsmasq
     - role: consul
     - role: loadbalancer
 
   tasks:
+    - import_role:
+        name: postgresql
+        tasks_from: local
+      tags:
+        - postgresql
+
     - import_role:
         name: consul
         tasks_from: loadbalancer
@@ -16,7 +22,29 @@
         - loadbalancer
 
     - import_role:
-        name: postgresql
-        tasks_from: local
+        name: passport
+        tasks_from: docker
+      when: passport is defined
       tags:
-        - postgresql
+        - passport
+
+    - import_role:
+        name: passport
+        tasks_from: loadbalancer
+      when: passport is defined
+      tags:
+        - loadbalancer
+
+    - import_role:
+        name: wallet
+        tasks_from: docker
+      when: wallet is defined
+      tags:
+        - wallet
+
+    - import_role:
+        name: wallet
+        tasks_from: loadbalancer
+      when: wallet is defined
+      tags:
+        - loadbalancer

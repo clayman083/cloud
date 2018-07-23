@@ -1,0 +1,23 @@
+---
+
+- name: Prepare folders
+  file: path={{ item }} state=directory
+  with_items:
+    - "{{ services_dir }}/passport"
+    - "{{ services_dir }}/loadbalancer/service/passport"
+
+- name: Assemble docker-compose
+  template: src={{ item }}.j2 dest={{ services_dir }}/passport/{{ item }}
+  with_items:
+    - .env
+    - docker-compose.yml
+
+- name: Check stack
+  shell: docker stack ls
+  register: output
+
+- name: Create stack if not exist
+  shell: docker stack deploy -c docker-compose.yml passport
+  args:
+    chdir: "{{ services_dir }}/passport"
+  when: output.stdout.find('passport') == -1

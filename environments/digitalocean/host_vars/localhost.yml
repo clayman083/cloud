@@ -1,7 +1,5 @@
 ---
 
-credentials_path: "./environments/.credentials"
-
 env: local
 
 public_network: "{{ ansible_en1['ipv4'][0] }}"
@@ -65,15 +63,37 @@ postgresql_exporter:
 
 # Passport settings
 passport:
+  domain: passport.dev.clayman.pro
+
+  image: registry.clayman.pro/passport:latest
+  replicas: 1
+
+  consul:
+    host: consul.service.consul
+
   secret_key: top_secret
 
   database:
-    user: passport
-    password: passport
+    host: postgresql.service.consul
+    port: 5432
+    name: passport
 
 
 # Wallet settings
 wallet:
+  domain: wallet.dev.clayman.pro
+
+  image: registry.clayman.pro/wallet:latest
+  replicas: 1
+
+  consul:
+    host: consul.service.consul
+
+  secret_key: top_secret
+
+  passport_dsn: https://{{ passport.domain }}
+
   database:
-    user: wallet
-    password: wallet
+    host: postgresql.service.consul
+    port: 5432
+    name: wallet

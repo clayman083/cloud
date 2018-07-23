@@ -1,0 +1,6 @@
+---
+
+- name: Update database schema
+  shell: docker-compose run server psql -h {{ passport.database.host }} -U {{ passport.database.user }} -d {{ passport.database.name }} -f /usr/share/passport/upgrade_schema.sql
+  args:
+    chdir: "{{ services_dir }}/passport"

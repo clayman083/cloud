@@ -1,0 +1,13 @@
+---
+
+- import_tasks: docker.yml
+  tags:
+    - passport
+
+- import_tasks: loadbalancer.yml
+  tags:
+    - passport
+
+- import_tasks: deploy.yml
+  tags:
+    - passport

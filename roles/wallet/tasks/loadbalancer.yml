@@ -1,0 +1,15 @@
+---
+
+- name: Prepare folders
+  file: path={{ item }} state=directory
+  with_items:
+    - "{{ services_dir }}/loadbalancer/service/wallet"
+
+- name: Assemble nginx consul-template config
+  template: src=nginx.consul-template.conf.j2 dest={{ services_dir }}/loadbalancer/consul-templates/wallet.conf
+
+- name: Assemble consul-template service config
+  template:
+    src: consul-template.service.j2
+    dest: "{{ services_dir }}/loadbalancer/service/wallet/run"
+    mode: 'u+x'
