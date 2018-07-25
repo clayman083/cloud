@@ -1,0 +1,21 @@
+---
+
+- name: Set facts
+  set_fact:
+    passport_dir: "{{ playbook_dir }}/../passport"
+
+- name: Checkout repo
+  git:
+    repo: "{{ passport.repo }}"
+    dest: "{{ passport_dir }}"
+    version: develop
+    update: no
+
+- name: Create virtual environment
+  shell: $(brew --cellar python)/3.7.0/bin/python3 -m venv venv
+  args:
+    chdir: "{{ passport_dir }}"
+    creates: "{{ passport_dir }}/venv"
+
+- name: Assemble local env
+  template: src=".env.local.j2" dest="{{ passport_dir }}/.env"

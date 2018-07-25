@@ -5,7 +5,7 @@ env: local
 public_network: "{{ ansible_en1['ipv4'][0] }}"
 private_network: "{{ ansible_en1['ipv4'][0] }}"
 
-services_dir: "{{ playbook_dir }}/playground"
+services_dir: "{{ playbook_dir }}/../playground"
 
 
 superuser:
@@ -63,6 +63,8 @@ postgresql_exporter:
 
 # Passport settings
 passport:
+  repo: git@github.com:clayman74/passport.git
+
   domain: passport.dev.clayman.pro
 
   image: registry.clayman.pro/passport:latest
@@ -77,10 +79,14 @@ passport:
     host: postgresql.service.consul
     port: 5432
     name: passport
+    user: passport
+    password: passport
 
 
 # Wallet settings
 wallet:
+  repo: git@github.com:clayman74/wallet.git
+
   domain: wallet.dev.clayman.pro
 
   image: registry.clayman.pro/wallet:latest
@@ -97,3 +103,5 @@ wallet:
     host: postgresql.service.consul
     port: 5432
     name: wallet
+    user: wallet
+    password: wallet
