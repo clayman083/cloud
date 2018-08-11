@@ -1,0 +1,43 @@
+---
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+  external_labels:
+    monitor: 'prometheus'
+
+
+rule_files:
+  - "/etc/prometheus/rules.d/node.rules.yml"
+
+alerting:
+  alertmanagers:
+    - scheme: http
+      static_configs:
+        - targets:
+          - 'alertmanager.service.consul:9093'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'exporters'
+    consul_sd_configs:
+      - server: 'consul.service.consul:8500'
+        services:
+          - node-exporter
+          - consul-exporter
+          - cadvisor-exporter
+          - postgres-exporter
+    relabel_configs:
+      - source_labels: [__meta_consul_service]
+        target_label: exporter
+
+  - job_name: 'apps'
+    metrics_path: /-/metrics
+    consul_sd_configs:
+      - server: 'consul.service.consul:8500'
+        services:
+          - passport

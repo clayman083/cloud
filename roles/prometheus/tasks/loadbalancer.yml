@@ -1,0 +1,21 @@
+---
+
+- name: Prepare folders
+  file: path={{ item }} state=directory
+  with_items:
+    - "{{ services_dir }}/loadbalancer/conf.d"
+
+- name: Install packages
+  apt: name="{{ item }}"
+  when: env != 'local'
+  with_items:
+    - python-passlib
+
+- name: Assemble basic auth htpasswd
+  htpasswd:
+    path: "{{ services_dir }}/loadbalancer/conf.d/prometheus.htpasswd"
+    name: "{{ prometheus.web.user }}"
+    password: "{{ prometheus.web.password }}"
+
+- name: Assemble nginx config
+  template: src=nginx.conf.j2 dest={{ services_dir }}/loadbalancer/conf.d/prometheus.conf

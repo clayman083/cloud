@@ -1,0 +1,18 @@
+---
+
+- hosts: localhost
+  vars_files:
+    - 'environments/digitalocean/credentials.yml'
+
+  roles:
+    - role: digitalocean
+      tags:
+        - prometheus
+
+
+- hosts: droplets
+  vars_files:
+    - 'environments/digitalocean/credentials.yml'
+
+  roles:
+    - role: prometheus

@@ -1,0 +1,29 @@
+---
+
+- name: Prepare folders
+  file: path={{ item }} state=directory
+  with_items:
+    - "{{ services_dir }}/prometheus"
+    - "{{ services_dir }}/prometheus/rules.d"
+    - "{{ services_dir }}/consul/conf.d"
+
+- name: Assemble config files
+  template: src={{ item.src }}.j2 dest={{ item.dest }}
+  with_items:
+    - src: alertmanager.yml
+      dest: "{{ services_dir }}/prometheus/alertmanager.yml"
+    - src: consul.json
+      dest: "{{ services_dir }}/consul/conf.d/prometheus.json"
+    - src: docker-compose.yml
+      dest: "{{ services_dir }}/prometheus/docker-compose.yml"
+    - src: prometheus.yml
+      dest: "{{ services_dir }}/prometheus/prometheus.yml"
+
+- name: Upload alerting rules
+  copy: src=rules/{{ item }} dest={{ services_dir }}/prometheus/rules.d/{{ item }}
+  with_items:
+    - node.rules.yml
+
+# - name: Run service
+#   shell: docker-compose up -d chdir={{ services_dir }}/prometheus
+#   when: env == 'local'

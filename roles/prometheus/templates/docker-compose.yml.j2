@@ -1,0 +1,137 @@
+---
+
+version: '3.3'
+
+networks:
+  prometheus:
+    external:
+      name: backend
+
+volumes:
+  alertmanager_data:
+  prometheus_data:
+  grafana_data:
+
+services:
+  node_exporter:
+    container_name: node_exporter
+    image: prom/node-exporter:latest
+    dns: {{ private_network.address }}
+    hostname: {% raw %}"{{.Node.Hostname}}"{% endraw %}
+
+    environment:
+      - NODE_ID={% raw %}{{.Node.ID}}{% endraw %}
+
+{% if env != 'local' %}
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "unixgram:///dev/log"
+        tag: node_exporter
+{% endif %}
+    networks:
+      - prometheus
+    ports:
+      - {{ private_network['address'] }}:9100:9100
+    restart: always
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+
+  cadvisor_exporter:
+    container_name: cadvisor_exporter
+    image: google/cadvisor:latest
+    command: -logtostderr -docker_only
+    dns: {{ private_network.address }}
+{% if env != 'local' %}
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "unixgram:///dev/log"
+        tag: cadvisor_exporter
+{% endif %}
+    networks:
+      - prometheus
+    ports:
+      - {{ private_network['address'] }}:8080:8080
+    restart: always
+    volumes:
+      - "/:/rootfs:ro"
+      - "/var/run:/var/run:rw"
+      - "/sys:/sys:ro"
+      - "/var/lib/docker/:/var/lib/docker:ro"
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:v2.2.1
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention=14d'
+    dns: {{ private_network.address }}
+{% if env != 'local' %}
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "unixgram:///dev/log"
+        tag: prometheus
+{% endif %}
+    networks:
+      - prometheus
+    ports:
+      - {{ private_network['address'] }}:9090:9090
+    restart: always
+    volumes:
+      - ./:/etc/prometheus
+      - prometheus_data:/prometheus
+
+  alertmanager:
+    container_name: alertmanager
+    image: prom/alertmanager:v0.15.1
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    dns: {{ private_network.address }}
+    labels:
+      org.label-schema.group: "monitoring"
+{% if env != 'local' %}
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "unixgram:///dev/log"
+        tag: alertmanager
+{% endif %}
+    networks:
+      - prometheus
+    ports:
+      - {{ private_network['address'] }}:9093:9093
+    restart: always
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager_data:/alertmanager
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:5.2.1
+    dns: {{ private_network.address }}
+    environment:
+      - GF_SECURITY_ADMIN_USER={{ grafana.admin.user }}
+      - GF_SECURITY_ADMIN_PASSWORD={{ grafana.admin.password }}
+      - GF_SERVER_ROOT_URL=https://{{ grafana.domain }}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    labels:
+      org.label-schema.group: "monitoring"
+{% if env != 'local' %}
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "unixgram:///dev/log"
+        tag: grafana
+{% endif %}
+    networks:
+      - prometheus
+    ports:
+      - {{ private_network['address'] }}:3000:3000
+    volumes:
+      - grafana_data:/var/lib/grafana

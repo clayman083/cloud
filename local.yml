@@ -6,6 +6,7 @@
     - role: dnsmasq
     - role: consul
     - role: loadbalancer
+    - role: prometheus
 
   tasks:
     - import_role:
@@ -34,6 +35,7 @@
       when: passport is defined
       tags:
         - loadbalancer
+        - passport
 
     - import_role:
         name: wallet
@@ -48,3 +50,4 @@
       when: wallet is defined
       tags:
         - loadbalancer
+        - wallet

@@ -1,0 +1,78 @@
+{
+  "services": [
+    {
+      "name": "node-exporter",
+      "tags": ["exporters", "node"],
+      "address": "{{ private_network['address'] }}",
+      "port": 9100,
+      "meta": {
+        "tier": "production",
+        "hostname": "alpha",
+        "exporter": "node"
+      },
+      "checks": [
+        {
+          "id": "node_exporter_check",
+          "name": "Prometheus node exporter health check",
+          "http": "http://{{ private_network['address'] }}:9100",
+          "interval": "20s"
+        }
+      ]
+    },
+    {
+      "name": "cadvisor-exporter",
+      "tags": ["exporters", "cadvisor"],
+      "address": "{{ private_network['address'] }}",
+      "port": 8080,
+      "meta": {
+        "tier": "production",
+        "hostname": "alpha",
+        "exporter": "cadvisor"
+      },
+      "checks": [
+        {
+          "id": "cadvisor_exporter_check",
+          "name": "Prometheus cAdvisor exporter health check",
+          "http": "http://{{ private_network['address'] }}:8080",
+          "interval": "20s"
+        }
+      ]
+    },
+    {
+      "name": "prometheus",
+      "address": "{{ private_network['address'] }}",
+      "port": 9090,
+      "meta": {
+        "tier": "production",
+        "hostname": "alpha",
+        "exporter": "prometheus"
+      },
+      "checks": [
+        {
+          "id": "prometheus_check",
+          "name": "Prometheus server health check",
+          "http": "http://{{ private_network['address'] }}:8080",
+          "interval": "20s"
+        }
+      ]
+    },
+    {
+      "name": "alertmanager",
+      "address": "{{ private_network['address'] }}",
+      "port": 9093,
+      "checks": [
+        {
+          "id": "prometheus_check",
+          "name": "Prometheus alert manager health check",
+          "http": "http://{{ private_network['address'] }}:9093",
+          "interval": "20s"
+        }
+      ]
+    },
+    {
+      "name": "grafana",
+      "address": "{{ private_network['address'] }}",
+      "port": 3000
+    }
+  ] 
+}

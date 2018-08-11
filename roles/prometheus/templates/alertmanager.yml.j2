@@ -1,0 +1,12 @@
+---
+
+route:
+  receiver: 'slack'
+
+receivers:
+  - name: 'slack'
+    slack_configs:
+      - api_url: '{{ alertmanager.slack.api_url|default('') }}'
+        channel: '{{ alertmanager.slack.channel }}'
+        username: '{{ alertmanager.slack.username }}'
+        text: {% raw %}"<!channel> \nsummary: {{ .CommonAnnotations.summary }}\ndescription: {{ .CommonAnnotations.description }}"{% endraw %}

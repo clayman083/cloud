@@ -1,0 +1,9 @@
+---
+
+- import_tasks: docker.yml
+  tags:
+    - prometheus
+
+- import_tasks: loadbalancer.yml
+  tags:
+    - prometheus

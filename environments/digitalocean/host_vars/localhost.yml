@@ -61,6 +61,28 @@ postgresql_exporter:
   password: postgres
 
 
+# Grafana settings
+grafana:
+  domain: grafana.dev.clayman.pro
+  admin:
+    user: grafana
+    password: grafana
+
+# Prometheus settings
+prometheus:
+  domain: prometheus.dev.clayman.pro
+  web:
+    user: prometheus
+    password: prometheus
+
+alertmanager:
+  domain: alerts.dev.clayman.pro
+
+  slack:
+    username: 'Prometheus'
+    channel: 'general'
+
+
 # Passport settings
 passport:
   repo: git@github.com:clayman74/passport.git
