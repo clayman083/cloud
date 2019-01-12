@@ -9,6 +9,7 @@
         - postgresql
         - loadbalancer
         - passport
+        - wallet
 
 
 - hosts: droplets
@@ -20,6 +21,8 @@
     - role: loadbalancer
     - role: passport
       when: passport is defined
+    - role: wallet
+      when: wallet is defined
 
   tasks:
     - include_role:
