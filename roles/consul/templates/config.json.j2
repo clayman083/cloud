@@ -1,17 +1,19 @@
 {
-{% raw %}
-    "advertise_addr" : "{{ GetInterfaceIP \"eth0\" }}",
-    "bind_addr": "{{ GetInterfaceIP \"eth0\" }}",
-{% endraw %}
+    "advertise_addr" : "{{ private_network.address }}",
     "client_addr": "0.0.0.0",
-    "bootstrap_expect": {{ consul.bootstrap_expect|default(1) }},
     "data_dir": "/consul/data",
-    "datacenter": "{{ consul.datacenter|default('local') }}",
+    "datacenter": "{{ consul.datacenter|default('develop') }}",
+    "node_name": "{{ consul.node }}",
 {% if consul.server %}
+{% set current_host = [ansible_hostname] %}
+    "bootstrap_expect": {{ groups['service-discovery']|length }},
+{% if groups['service-discovery']|difference(current_host)|length > 0 %}
+    "retry_join": [{% for host in groups['service-discovery']|difference(current_host) %}"{{ hostvars[host]['private_network']['address'] }}"{% if not loop.last %}, {% endif %}{% endfor %}],
+{% endif %}
     "server": true,
-{% endif -%}
-{%- if consul.ui %}    
     "ui": true,
+{% else %}
+    "retry_join": [{% for host in groups['service-discovery'] %}"{{ hostvars[host]['private_network']['address'] }}"{% if not loop.last %}, {% endif %}{% endfor %}],
 {% endif %}
     "leave_on_terminate": true,
     "skip_leave_on_interrupt": true,

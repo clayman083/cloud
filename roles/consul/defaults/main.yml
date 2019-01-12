@@ -2,21 +2,42 @@
 
 # Consul settings
 consul:
-  # Container 
-  image: consul:1.2.1
-  network: backend
-  
-  # Agent 
-  server: false
-  ui: false
+  domain: "consul.{{ domain }}"
+
+  conf_dir: "{{ services_dir }}/consul/conf.d"
+
+  # Container
+  container:
+    image: consul:1.2.1
+    name: consul
+    restart: always
+    network: "{{ docker.networks.backend }}"
+
+  # Agent
+  server: no
+  ui: no
+
+  datacenter: dc
+  node: "{{ ansible_hostname }}"
 
   service: consul.service.consul
 
-  # Loadbalancer 
-  domain: consul.dev
-  web:
-    user: consul
-    password: consul
+  exporter:
+    enabled: yes
 
-consul_exporter:
-  image: prom/consul-exporter:v0.3.0
+    host: "{{ private_network.address }}"
+    port: 9107
+
+    container:
+      image: prom/consul-exporter:v0.3.0
+      name: consul_exporter
+      dns: "{{ private_network.address }}"
+      restart: always
+
+    service:
+      name: consul-exporter
+      tags:
+        - "{{ env }}"
+      meta:
+        hostname: "{{ ansible_hostname }}"
+        tier: "{{ env }}"

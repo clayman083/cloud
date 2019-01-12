@@ -1,12 +1,19 @@
-upstream consul {
-    server consul.service.consul:8500;
+upstream consul_cluster {
+    least_conn;
+{% raw %}
+    {{ range service {% endraw %}"consul"{% raw %} }}
+    server {{.Address}}:8500 max_fails=3 fail_timeout=60 weight=1;
+    {{ else }}
+    server 127.0.0.1:65535; # force a 502
+    {{ end }}
+{% endraw %}
 }
 
 server {
     listen 80;
-    server_name {{ consul.domain }};
+    server_name {{ loadbalancer.consul.domain }};
 
-{% if env != 'local' %}
+{% if env != 'develop' %}
     location ~ /.well-known {
         root /var/www;
         allow all;
@@ -17,7 +24,7 @@ server {
     }
 {% else %}
     location / {
-      proxy_pass                            http://consul;
+      proxy_pass                            http://consul_cluster;
       proxy_set_header  Host                $http_host;   # required for docker client's sake
       proxy_set_header  X-Real-IP           $remote_addr; # pass on real client's IP
       proxy_set_header  X-Forwarded-For     $proxy_add_x_forwarded_for;
@@ -27,13 +34,13 @@ server {
 {% endif %}
 }
 
-{% if env != 'local' %}
+{% if env != 'develop' %}
 server {
     listen 443 ssl http2;
-    server_name {{ consul.domain }};
+    server_name {{ loadbalancer.consul.domain }};
 
-    ssl_certificate /etc/letsencrypt/live/{{ consul.domain }}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/{{ consul.domain }}/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/{{ loadbalancer.consul.domain }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ loadbalancer.consul.domain }}/privkey.pem;
     ssl_verify_depth 3;
 
     ssl_session_timeout 5m;
@@ -44,10 +51,12 @@ server {
     ssl_prefer_server_ciphers on;
 
     location / {
+{% if env != 'develop' %}
       auth_basic "Consul realm";
       auth_basic_user_file /etc/nginx/conf.d/consul.htpasswd;
+{% endif %}
 
-      proxy_pass                            http://consul;
+      proxy_pass                            http://consul_cluster;
       proxy_set_header  Host                $http_host;   # required for docker client's sake
       proxy_set_header  X-Real-IP           $remote_addr; # pass on real client's IP
       proxy_set_header  X-Forwarded-For     $proxy_add_x_forwarded_for;

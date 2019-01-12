@@ -1,0 +1,11 @@
+---
+
+- name: Restart consul service
+  command: docker-compose up -d
+  args:
+    chdir: "{{ services_dir }}/consul"
+  listen: "restart consul"
+
+- name: Update consul config
+  shell: docker kill -s HUP {{ consul.container.name }}
+  listen: "reload consul"

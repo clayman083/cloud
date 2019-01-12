@@ -2,46 +2,49 @@
 
 version: '3.3'
 
-networks:
-  consul:
-    external:
-      name: {{ consul.network|default('backend') }}
-
 volumes:
-  consul_data:
+  data:
+
+networks:
+  {{ consul.container.network }}:
+    external: true
 
 services:
   server:
-    container_name: consul
-    hostname: {{ ansible_hostname }}
-    image: {{ consul.image }}
+    container_name: {{ consul.container.name }}
+    image: {{ consul.container.image }}
     command: consul agent -config-file /etc/consul/config.json -config-dir /etc/consul/conf.d
-    networks:
-      - consul
-{% if env != 'local' %}
+{% if env != 'develop' %}
     logging:
       driver: syslog
       options:
         syslog-address: "unixgram:///dev/log"
         tag: consul
 {% endif %}
+    networks:
+      - {{ consul.container.network }}
     ports:
-{% if env == 'local' %}
+      - {{ private_network.address }}:8300:8300
+      - {{ private_network.address }}:8301:8301
+      - {{ private_network.address }}:8301:8301/udp
+      - {{ private_network.address }}:8302:8302
+      - {{ private_network.address }}:8302:8302/udp
+      - {{ private_network.address }}:8400:8300
       - {{ private_network.address }}:8500:8500
-{% endif %}
       - {{ private_network.address }}:8600:8600/udp
+    restart: {{ consul.container.restart }}
+    stop_signal: SIGINT
     volumes:
       - ./:/etc/consul
-      - consul_data:/consul/data
+      - data:/consul/data
 
+{% if consul.server and consul.exporter.enabled %}
   exporter:
-    container_name: consul_exporter
-    image: {{ consul_exporter.image }}
-    dns: {{ private_network.address }}
-    command: --consul.server={{ consul.service }}:8500
-    networks:
-      - consul
-{% if env != 'local' %}
+    container_name: {{ consul.exporter.container.name }}
+    image: {{ consul.exporter.container.image }}
+    dns: {{ consul.exporter.container.dns }}
+    command: --consul.server={{ private_network.address }}:8500
+{% if env != 'develop' %}
     logging:
       driver: syslog
       options:
@@ -49,4 +52,6 @@ services:
         tag: consul_exporter
 {% endif %}
     ports:
-      - {{ private_network.address }}:9107:9107
+      - {{ consul.exporter.host }}:{{ consul.exporter.port }}:9107
+    restart: {{ consul.exporter.container.restart }}
+{% endif %}

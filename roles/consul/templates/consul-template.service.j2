@@ -1,0 +1,5 @@
+#!/bin/sh
+
+exec consul-template \
+     -consul-addr "consul.service.consul:8500" \
+     -template "/etc/consul-templates/consul.conf:/etc/nginx/conf.d/consul.conf:sv hup nginx"

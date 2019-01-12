@@ -1,18 +1,30 @@
 {
   "services": [
+{% if consul.server and consul.exporter.enabled %}
     {
-      "name": "consul-exporter",
-      "tags": ["exporters", "consul"],
-      "address": "{{ private_network['address'] }}",
-      "port": 9107,
+      "name": "{{ consul.exporter.service.name }}",
+{% if consul.exporter.service.tags %}
+      "tags": ["{{ consul.exporter.service.tags|join('", "') }}"],
+{% endif %}
+{% if consul.exporter.service.meta %}
+      "meta": {
+{% for key, value in consul.exporter.service.meta.items() %}
+        "{{ key }}": "{{ value }}"{% if not loop.last %},{% endif %}
+
+{% endfor %}
+      },
+{% endif %}
+      "address": "{{ consul.exporter.host }}",
+      "port": {{ consul.exporter.port }},
       "checks": [
         {
           "id": "consul_exporter_check",
           "name": "Prometheus consul exporter health check",
-          "http": "http://{{ private_network['address'] }}:9107",
+          "http": "http://{{ consul.exporter.host }}:{{ consul.exporter.port }}",
           "interval": "20s"
         }
       ]
     }
+{% endif %}
   ]
 }
