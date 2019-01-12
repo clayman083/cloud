@@ -3,6 +3,7 @@
 - name: Set facts
   set_fact:
     passport_dir: "{{ playbook_dir }}/../passport"
+    passport_venv_dir: "{{ lookup('env','WORKON_HOME') }}/passport"
 
 - name: Checkout repo
   git:
@@ -12,10 +13,9 @@
     update: no
 
 - name: Create virtual environment
-  shell: $(brew --cellar python)/3.7.0/bin/python3 -m venv venv
+  shell: $(brew --cellar python)/3.7.0/bin/python3 -m venv {{ passport_venv_dir }}
   args:
-    chdir: "{{ passport_dir }}"
-    creates: "{{ passport_dir }}/venv"
+    creates: "{{ passport_venv_dir }}"
 
 - name: Assemble local env
   template: src=".env.local.j2" dest="{{ passport_dir }}/.env"

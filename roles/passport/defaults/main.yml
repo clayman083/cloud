@@ -1,0 +1,25 @@
+---
+
+passport:
+  repo: git@github.com:clayman74/passport.git
+
+  domain: "passport.{{ domain }}"
+
+  container:
+    image: registry.clayman.pro/passport:latest
+    network: "{{ docker.networks.backend }}"
+    dns: "{{ private_network.address }}"
+    replicas: 1
+
+  consul:
+    host: consul.service.consul
+    port: 8500
+
+  secret_key: top_secret
+
+  database:
+    host: "{{ env }}.{{ postgresql.service.name }}.service.consul"
+    port: 5432
+    name: "{{ postgresql.databases.passport.name }}"
+    user: "{{ postgresql.users.passport.user }}"
+    password: "{{ postgresql.users.passport.password }}"

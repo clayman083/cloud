@@ -3,9 +3,8 @@
 version: '3.3'
 
 networks:
-  backend:
-    external:
-      name: backend
+  {{ passport.container.network }}:
+    external: true
 
 services:
   server:
@@ -13,8 +12,8 @@ services:
     dns: {{ private_network.address }}
     env_file: .env
     networks:
-      - backend
-{% if env != 'local' %}
+      - {{ passport.container.network }}
+{% if env != 'develop' %}
     logging:
       driver: syslog
       options:

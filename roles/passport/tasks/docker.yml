@@ -1,7 +1,7 @@
 ---
 
 - import_tasks: local.yml
-  when: env == 'local'
+  when: env == 'develop'
 
 - name: Prepare folders
   file: path={{ item }} state=directory
