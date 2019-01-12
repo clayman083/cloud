@@ -1,43 +1,52 @@
---- 
+---
 
 version: '3.3'
 
+{% if env != 'develop' %}
 networks:
-  postgres:
-    external:
-      name: backend
+  postgresql:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.1.0.0/24
+{% endif %}
 
-{% if env == 'local' %}
+{% if env == 'develop' %}
 volumes:
-  postgres_data:
+  data:
 {% endif %}
 
 services:
-{% if env == 'local' %}
+{% if env == 'develop' %}
   server:
-    container_name: postgresql
-    image: postgres:alpine
+    container_name: {{ postgresql.container.name }}
+    image: {{ postgresql.container.image }}
     ports:
-      - "{{ private_network['address'] }}:5432:5432"
-    restart: always
+      - "{{ postgresql.host }}:{{ postgresql.port }}:5432"
+    restart: {{ postgresql.container.restart }}
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - data:/var/lib/postgresql
 {% endif %}
 
+{% if postgresql.exporter.enabled %}
   exporter:
-    container_name: postgres_exporter
-    image: wrouesnel/postgres_exporter
-    dns: {{ private_network.address }}
+    container_name: {{ postgresql.exporter.container.name }}
+    image: {{ postgresql.exporter.container.image }}
+    dns: {{ postgresql.exporter.container.dns }}
     env_file: .env
-    networks:
-      - postgres
-{% if env != 'local' %}
+{% if env != 'develop' %}
     logging:
       driver: syslog
       options:
         syslog-address: "unixgram:///dev/log"
         tag: postgres_exporter
+    networks:
+      - postgresql
 {% endif %}
     ports:
-      - "{{ private_network['address'] }}:9187:9187"
-    restart: always
+      - "{{ postgresql.exporter.host }}:{{ postgresql.exporter.port }}:9187"
+    restart: {{ postgresql.exporter.container.restart }}
+    volumes:
+      - ./queries.yaml:/opt/services/postgresql/queries.yaml
+{% endif %}

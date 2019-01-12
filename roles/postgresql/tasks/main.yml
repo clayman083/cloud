@@ -16,6 +16,11 @@
     - postgresql
 
 - import_tasks: exporter.yml
-  when: postgresql_exporter is defined
+  when: postgresql.exporter.enabled|default(False)
   tags:
+    - postgresql
+
+- import_tasks: consul.yml
+  tags:
+    - consul
     - postgresql

@@ -1,0 +1,72 @@
+---
+
+postgresql:
+  enabled: no
+
+  version: 10
+
+  max_connections: '100'
+  superuser_reserved_connections: '3'
+  shared_buffers: '256MB'
+
+  work_mem: '32MB'
+  maintenance_work_mem: '128MB'
+  effective_cache_size: '128MB'
+
+  autovacuum: on
+  autovacuum_max_workers: 1
+
+  log_min_duration_statement: 1000
+  logging_collector: 'off'
+
+  host: "{{ private_network.address }}"
+  port: 5432
+
+  container:
+    image: postgres:10-alpine
+    name: postgresql
+    restart: always
+
+  service:
+    name: postgresql
+    tags:
+      - "{{ env }}"
+    meta:
+      hostname: "{{ ansible_hostname }}"
+      tier: "{{ env }}"
+
+  users:
+    prometheus:
+      user: prometheus
+      password: prometheus
+    backups:
+      user: backups
+      password: backups
+
+  exporter:
+    enabled: yes
+
+    host: "{{ private_network.address }}"
+    port: 9187
+
+    container:
+      image: wrouesnel/postgres_exporter
+      name: postgresql_exporter
+      dns: "{{ private_network.address }}"
+      restart: always
+
+    schema: prometheus
+    user: prometheus
+    password: prometheus
+
+    service:
+      name: postgres-exporter
+      tags:
+        - "{{ env }}"
+      meta:
+        hostname: "{{ ansible_hostname }}"
+        tier: "{{ env }}"
+
+    server:
+      host: "{{ env }}.postgresql.service.consul"
+      port: 5432

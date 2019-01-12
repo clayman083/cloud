@@ -1,0 +1,10 @@
+---
+
+- name: Prepare folders
+  file: path={{ item }} state=directory
+  with_items:
+    - "{{ consul.conf_dir }}"
+
+- name: Assemble consul services config
+  template: src=consul.json.j2 dest={{ consul.conf_dir }}/postgres.json
+  notify: reload consul

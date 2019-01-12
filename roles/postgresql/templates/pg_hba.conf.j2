@@ -92,6 +92,8 @@ host    all             all             127.0.0.1/32            md5
 host    all             all             172.0.0.0/8           md5
 {% endif %}
 
+host    all             all             172.1.0.0/24           md5
+
 {% if private_network %}
 # Private network
 host    all             all             {{ private_network['network'] }}/24          md5

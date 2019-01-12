@@ -2,3 +2,13 @@
 
 - name: restart postgres
   systemd: name=postgresql state=restarted
+
+- name: Restart postgresql exporter
+  command: docker-compose up -d
+  args:
+    chdir: "{{ services_dir }}/postgresql"
+  listen: "reload postgresql exporter"
+
+- name: Update consul config
+  shell: docker kill -s HUP {{ consul.container.name }}
+  listen: "reload consul"

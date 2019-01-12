@@ -1,27 +1,47 @@
 {
   "services": [
     {
-      "name": "postgresql",
-      "tags": ["primary"],
-      "address": "{{ private_network['address'] }}",
+      "name": "{{ postgresql.service.name }}",
+{% if postgresql.service.tags %}
+      "tags": ["{{ postgresql.service.tags|join('", "') }}"],
+{% endif %}
+{% if postgresql.service.meta %}
       "meta": {
-        "meta": "Database server"
+{% for key, value in postgresql.service.meta.items() %}
+        "{{ key }}": "{{ value }}"{% if not loop.last %},{% endif %}
+
+{% endfor %}
       },
-      "port": 5432
-    },
+{% endif %}
+      "address": "{{ postgresql.host }}",
+      "port": {{ postgresql.port }}
+    }{% if postgresql.exporter.enabled %},{% endif %}
+
+{% if postgresql.exporter.enabled %}
     {
-      "name": "postgres-exporter",
-      "tags": ["exporters", "postgresql"],
-      "address": "{{ private_network['address'] }}",
-      "port": 9187,
+      "name": "{{ postgresql.exporter.service.name }}",
+{% if postgresql.exporter.service.tags %}
+      "tags": ["{{ postgresql.exporter.service.tags|join('", "') }}"],
+{% endif %}
+{% if postgresql.exporter.service.meta %}
+      "meta": {
+{% for key, value in postgresql.exporter.service.meta.items() %}
+        "{{ key }}": "{{ value }}"{% if not loop.last %},{% endif %}
+
+{% endfor %}
+      },
+{% endif %}
+      "address": "{{ postgresql.exporter.host }}",
+      "port": {{ postgresql.exporter.port }},
       "checks": [
         {
           "id": "postgres_exporter_check",
           "name": "Postgresql prometheus exporter health check",
-          "http": "http://{{ private_network['address'] }}:9187",
+          "http": "http://{{ postgresql.exporter.host }}:{{ postgresql.exporter.port }}",
           "interval": "20s"
         }
       ]
     }
-  ] 
+{% endif %}
+  ]
 }
