@@ -1,9 +1,13 @@
 ---
 
 - import_tasks: docker.yml
-  tags: 
+  tags:
     - wallet
 
 - import_tasks: loadbalancer.yml
+  tags:
+    - wallet
+
+- import_tasks: deploy.yml
   tags:
     - wallet

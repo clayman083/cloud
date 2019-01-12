@@ -1,0 +1,23 @@
+---
+
+wallet:
+  repo: git@github.com:clayman74/wallet.git
+
+  domain: "wallet.{{ domain }}"
+
+  container:
+    image: registry.clayman.pro/wallet:latest
+    network: "{{ docker.networks.backend }}"
+    dns: "{{ private_network.address }}"
+    replicas: 1
+
+  consul:
+    host: consul.service.consul
+    port: 8500
+
+  database:
+    host: "{{ env }}.{{ postgresql.service.name }}.service.consul"
+    port: 5432
+    name: "{{ postgresql.databases.wallet.name }}"
+    user: "{{ postgresql.users.wallet.user }}"
+    password: "{{ postgresql.users.wallet.password }}"

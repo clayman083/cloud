@@ -3,6 +3,7 @@
 - name: Set facts
   set_fact:
     wallet_dir: "{{ playbook_dir }}/../wallet"
+    wallet_venv_dir: "{{ lookup('env','WORKON_HOME') }}/wallet"
 
 - name: Checkout repo
   git:
@@ -12,10 +13,9 @@
     update: no
 
 - name: Create virtual environment
-  shell: $(brew --cellar python)/3.7.0/bin/python3 -m venv venv
+  shell: $(brew --cellar python)/3.7.0/bin/python3 -m venv {{ wallet_venv_dir }}
   args:
-    chdir: "{{ wallet_dir }}"
-    creates: "{{ wallet_dir }}/venv"
+    creates: "{{ wallet_venv_dir }}"
 
 - name: Assemble local env
   template: src=".env.local.j2" dest="{{ wallet_dir }}/.env"

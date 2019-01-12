@@ -13,7 +13,7 @@ server {
     listen 80;
     server_name {{ wallet.domain }};
 
-{% if env != 'local' %}
+{% if env != 'develop' %}
     location ~ /.well-known {
         root /var/www;
         allow all;
@@ -31,11 +31,12 @@ server {
         proxy_set_header   X-Forwarded-Host $server_name;
         proxy_set_header   X-Forwarded-Proto $scheme;
         proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Request-ID $request_id;
     }
 {% endif %}
 }
 
-{% if env != 'local' %}
+{% if env != 'develop' %}
 server {
     listen 443 ssl http2;
     server_name {{ wallet.domain }};
@@ -47,6 +48,10 @@ server {
     ssl_verify_depth 3;
     ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
 
+    location /-/ {
+        return 403;
+    }
+
     location / {
         proxy_pass http://wallet_cluster;
 
@@ -55,6 +60,7 @@ server {
         proxy_set_header   X-Forwarded-Host $server_name;
         proxy_set_header   X-Forwarded-Proto $scheme;
         proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Request-ID $request_id;
     }
 }
 {% endif %}
