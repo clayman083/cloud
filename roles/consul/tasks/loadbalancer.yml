@@ -9,14 +9,14 @@
   apt:
     name:
       - python-passlib
-  when: env != 'local'
+  when: env != 'develop'
 
 - name: Assemble basic auth htpasswd
   htpasswd:
     path: "{{ loadbalancer.conf_dir }}/consul.htpasswd"
     name: "{{ loadbalancer.consul.auth.user }}"
     password: "{{ loadbalancer.consul.auth.password }}"
-  when: env != 'local'
+  when: env != 'develop'
 
 - name: Assemble nginx config
   template: src="{{ item.src }}" dest="{{ item.dest }}"

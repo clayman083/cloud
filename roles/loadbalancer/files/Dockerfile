@@ -13,10 +13,6 @@ RUN DEBIAN_FRONTEND=noninteractive \
 RUN curl -o consul-template.zip -L $CT_URL && unzip consul-template.zip && rm consul-template.zip && \
     mv consul-template /usr/local/bin/consul-template
 
-# Install certbot
-# RUN echo 'deb http://ftp.debian.org/debian jessie-backports main' | tee /etc/apt/sources.list.d/backports.list && \
-#     apt-get update && apt-get install -y certbot -t jessie-backports
-
 RUN rm -v /etc/nginx/conf.d/*
 
 COPY nginx.conf    /etc/nginx/nginx.conf

@@ -1,0 +1,35 @@
+---
+
+- name: Prepare folders
+  file: path={{ item }} state=directory
+  with_items:
+    - "{{ loadbalancer.conf_dir }}"
+    - "{{ loadbalancer.certs_dir }}"
+    - "{{ loadbalancer.service_dir }}"
+    - "{{ loadbalancer.templates_dir }}"
+    - "{{ services_dir }}/loadbalancer/service/nginx"
+
+- name: Upload service file
+  copy:
+    src: nginx.service
+    dest: "{{ services_dir }}/loadbalancer/service/nginx/run"
+    mode: "a+x"
+
+- name: Upload docker file
+  copy: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - src: Dockerfile
+      dest: "{{ services_dir }}/loadbalancer/Dockerfile"
+  notify: "restart loadbalancer"
+
+- name: Assemble docker-compose file
+  template: src={{ item.src }}.j2 dest={{ item.dest }}
+  with_items:
+    - src: docker-compose.yml
+      dest: "{{ services_dir }}/loadbalancer/docker-compose.yml"
+    - src: nginx.conf
+      dest: "{{ services_dir }}/loadbalancer/nginx.conf"
+  notify: "restart loadbalancer"
+
+- name: Run service
+  shell: docker-compose up -d chdir={{ services_dir }}/loadbalancer

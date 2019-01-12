@@ -1,0 +1,25 @@
+---
+
+- name: Generate ssl certificate
+  shell: docker run --rm -v /etc/letsencrypt:/etc/letsencrypt -v /var/www:/var/www certbot/certbot certonly -n --agree-tos -m {{ loadbalancer.owner }} --webroot -w /var/www -d {{ item.value|join(' -d ') }}
+  args:
+    creates: "/etc/letsencrypt/live/{{ item.value[0] }}/cert.pem"
+  with_dict: "{{ domains }}"
+
+- name: Add cron task to renew certificates
+  cron:
+    name: "renew letsencrypt certificates"
+    job: "docker run --rm -v /etc/letsencrypt:/etc/letsencrypt -v /var/www:/var/www certbot/certbot renew >> /var/log/le-renew.log"
+    weekday: 1
+    hour: 2
+    minute: 30
+  become: true
+
+- name: Add cron task to reload nginx
+  cron:
+    name: "reload loadbalancer after renew"
+    job: "docker restart {{ loadbalancer.container.name }}"
+    weekday: 1
+    hour: 2
+    minute: 35
+  become: true

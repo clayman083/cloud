@@ -1,0 +1,7 @@
+---
+
+- name: Restart loadbalancer service
+  command: docker-compose up -d
+  args:
+    chdir: "{{ services_dir }}/loadbalancer"
+  listen: "restart loadbalancer"

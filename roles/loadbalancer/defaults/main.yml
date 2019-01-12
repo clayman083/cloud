@@ -1,0 +1,14 @@
+---
+
+loadbalancer:
+  conf_dir: "{{ services_dir }}/loadbalancer/conf.d"
+  certs_dir: "{{ services_dir }}/loadbalancer/certs"
+  service_dir: "{{ services_dir }}/loadbalancer/service"
+  templates_dir: "{{ services_dir }}/loadbalancer/consul-templates"
+
+  container:
+    image: loadbalancer:1.15
+    name: loadbalancer
+    dns: "{{ private_network.address }}"
+    restart: always
+    network: "{{ docker.networks.backend }}"
