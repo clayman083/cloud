@@ -1,9 +1,9 @@
 ---
 
 - name: Install syslog
-  apt: name="{{ item }}"
-  with_items:
-    - rsyslog
+  apt:
+    name:
+      - rsyslog
 
 - name: Assemble config
   template: src=rsyslog.conf.j2 dest=/etc/rsyslog.conf

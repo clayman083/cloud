@@ -57,9 +57,20 @@ $IncludeConfig /etc/rsyslog.d/*.conf
 ###############
 
 {% if syslog.master|default(False) %}
-$template RemoteLogs, "{{ syslog.nodes_logs_path }}/%HOSTNAME%/%PROGRAMNAME%.log"
 
-*.*     ?RemoteLogs
+template (name="json" type="list" option.jsonf="on") {
+    property(outname="@timestamp" name="timereported" dateFormat="rfc3339" format="jsonf")
+    property(outname="host" name="hostname" format="jsonf")
+    property(outname="severity" name="syslogseverity-text" caseConversion="lower" format="jsonf")
+    property(outname="facility" name="syslogfacility-text" format="jsonf")
+    property(outname="syslog-tag" name="syslogtag" format="jsonf")
+    property(outname="source" name="app-name" format="jsonf")
+    property(outname="message" name="msg" format="jsonf")
+}
+
+template (name="DynFile" type="string" string="/var/log/nodes/%HOSTNAME%/%PROGRAMNAME%/%SYSLOGSEVERITY-TEXT%.log")
+
+*.*  action(type="omfile" dynaFile="DynFile" template="json")
 
 {% if syslog.logstash is defined %}
 *.*     @{{ syslog.logstash.host }}:{{ syslog.logstash.port }}
