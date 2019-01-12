@@ -1,20 +1,22 @@
 ---
 
 - name: Install required packages
-  apt: name="{{ item }}" state=latest update_cache=yes
-  with_items:
-    - apt-transport-https
-    - binutils
-    - curl
-    - gcc
-    - git
-    - iptables
-    - nano
-    - mc
-    - net-tools
-    - tmux
-    - vim
-    - zsh
+  apt:
+    name:
+      - apt-transport-https
+      - binutils
+      - curl
+      - gcc
+      - git
+      - iptables
+      - nano
+      - mc
+      - net-tools
+      - tmux
+      - vim
+      - zsh
+    state: latest
+    update_cache: yes
 
 - name: Configure timezone
   shell: echo "{{ timezone }}" > /etc/timezone

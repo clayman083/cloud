@@ -1,6 +1,6 @@
 ---
 
 - name: Install required packages
-  apt: name="{{ item }}"
-  with_items:
-    - logrotate
+  apt:
+    name:
+      - logrotate

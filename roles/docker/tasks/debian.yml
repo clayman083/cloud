@@ -1,12 +1,14 @@
 ---
 
 - name: Install required packages
-  apt: name={{ item }} update_cache=yes force=yes
-  with_items:
-    - apt-transport-https
-    - ca-certificates
-    - openssl
-    - python-pip
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - openssl
+      - python-pip
+    update_cache: yes
+    force: yes
 
 - name: Add repo key
   apt_key: url=https://download.docker.com/linux/debian/gpg state=present
@@ -17,27 +19,8 @@
 - name: Install docker
   apt: name=docker-ce update_cache=yes force=yes
 
-- name: Remove docker rc
-  file: path=/etc/init.d/docker state=absent
-
-- name: Create folders for containers
-  file: path={{ item }} state=directory
-  with_items:
-    - /var/containers/
-    - /var/log/containers/
-
 - name: Install python library
   pip: name=docker-py
-
-- import_tasks: certs.yml
-
-- name: Assemble daemon config
-  template: src=daemon.json.j2 dest=/etc/docker/daemon.json
-  notify: "restart docker service"
-
-- name: Create systemd config
-  template: src=docker.service.j2 dest=/etc/systemd/system/docker.service mode=0644
-  notify: "restart docker service"
 
 - name: Download docker-compose
   get_url:

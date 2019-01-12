@@ -1,9 +1,9 @@
 ---
 
 - name: Install zsh
-  apt: name="{{ item }}"
-  with_items:
-    - zsh
+  apt:
+    name:
+      - zsh
 
 - name: Clone oh-my-zsh
   git:
