@@ -1,0 +1,90 @@
+---
+
+env: develop
+
+public_network: "{{ ansible_en1['ipv4'][0] }}"
+private_network: "{{ ansible_en1['ipv4'][0] }}"
+
+services_dir: "{{ playbook_dir }}/../playground"
+
+domain: dev.clayman.pro
+
+
+digitalocean:
+  token: "{{ lookup('env','DO_TOKEN') }}"
+  ssh_key: "{{ ansible_hostname }}"
+
+  droplets: "{{ groups['droplets'] }}"
+
+  image: 'debian-9-x64'
+  region: 'ams3'
+  size: '1gb'
+
+  provision_user: 'root'
+
+
+consul:
+  datacenter: local
+
+  server: yes
+  ui: yes
+
+
+# Loadbalancer settings
+loadbalancer:
+  consul:
+    domain: "{{ consul.domain }}"
+
+  prometheus:
+    domain: "prometheus.{{ domain }}"
+
+
+# Database settings
+postgresql:
+  users:
+    prometheus:
+      user: prometheus
+      password: prometheus
+    backups:
+      user: backups
+      password: backups
+    passport:
+      user: passport
+      password: passport
+    wallet:
+      user: wallet
+      password: wallet
+
+  databases:
+    passport:
+      name: passport
+      owner: passport
+    wallet:
+      name: wallet
+      owner: wallet
+
+  exporter:
+    user: prometheus
+    password: prometheus
+
+
+# Grafana settings
+grafana:
+  domain: grafana.dev.clayman.pro
+  admin:
+    user: grafana
+    password: grafana
+
+# Prometheus settings
+prometheus:
+  domain: prometheus.dev.clayman.pro
+  web:
+    user: prometheus
+    password: prometheus
+
+alertmanager:
+  domain: alerts.dev.clayman.pro
+
+  slack:
+    username: 'Prometheus'
+    channel: 'general'

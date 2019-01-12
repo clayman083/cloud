@@ -3,11 +3,17 @@
 credentials_path: "./environments/.credentials"
 
 superuser:
-  name: "clayman"
-  group: "clayman"
+  name: clayman
+  group: clayman
+
+domain: clayman.pro
 
 
 # Docker networks settings
+docker:
+  networks:
+    backend: backend
+
 networks:
   backend:
     name: backend

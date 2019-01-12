@@ -1,0 +1,91 @@
+---
+
+env: production
+
+public_network: "{{ ansible_eth0['ipv4'] }}"
+private_network: "{{ ansible_eth1['ipv4'] }}"
+docker_network: "{{ ansible_docker0['ipv4'] }}"
+
+services_dir: /opt/services
+
+# Syslog settings
+syslog:
+  master: yes
+  nodes_logs_path: /var/log/nodes
+
+
+# Registry settings
+registry:
+  domain: registry.clayman.pro
+
+  image: registry:2
+  container: registry
+  network: backend
+
+
+# Database settings
+postgresql:
+  users:
+    prometheus:
+      user: prometheus
+      password: prometheus
+    backups:
+      user: backups
+      password: backups
+    passport:
+      user: passport
+      password: passport
+    wallet:
+      user: wallet
+      password: wallet
+
+  databases:
+    passport:
+      name: passport
+      owner: passport
+    wallet:
+      name: wallet
+      owner: wallet
+
+  exporter:
+    user: prometheus
+    password: prometheus
+
+
+grafana:
+  domain: grafana.clayman.pro
+
+prometheus:
+  domain: prometheus.clayman.pro
+
+alertmanager:
+  domain: alerts.clayman.pro
+
+
+# Loadbalancer settings
+loadbalancer:
+  owner: dev@clayman.pro
+  domains:
+    consul:
+      domains:
+        - "{{ consul.domain }}"
+    registry:
+      domains:
+        - "{{ registry.domain }}"
+
+    alertmanager:
+      domains:
+        - "{{ alertmanager.domain }}"
+    grafana:
+      domains:
+        - "{{ grafana.domain }}"
+    prometheus:
+      domains:
+        - "{{ prometheus.domain }}"
+
+    passport:
+      domains:
+        - "{{ passport.domain }}"
+    wallet:
+      domains:
+        - "{{ wallet.domain }}"
