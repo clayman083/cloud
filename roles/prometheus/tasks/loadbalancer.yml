@@ -11,6 +11,10 @@
   with_items:
     - python-passlib
 
+- name: Install packages
+  pip: name=passlib
+  when: env == 'develop'
+
 - name: Assemble basic auth htpasswd
   htpasswd:
     path: "{{ services_dir }}/loadbalancer/conf.d/prometheus.htpasswd"
