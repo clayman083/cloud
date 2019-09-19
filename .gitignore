@@ -2,3 +2,4 @@
 **/*.retry
 .env
 .vagrant
+venv
