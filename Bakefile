@@ -1,9 +1,11 @@
-install: install/python
+install: install/python install/roles
 
-install/python:
-    python3 -m venv --system-site-packages venv
-    venv/bin/python3 -m pip install -r requirements.txt
+install/python: @skip=Pipfile.lock
+    pipenv install
+
+install/roles:
+    pipenv run ansible-galaxy install --roles-path=./roles/vendor -r roles/requirements.yml
 
 lint:
-    ansible-lint roles/*
-    ansible-lint playbooks/**/*.yml
+    pipenv run ansible-lint roles/*
+    pipenv run ansible-lint playbooks/**/*.yml
