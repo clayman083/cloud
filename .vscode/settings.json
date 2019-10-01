@@ -2,5 +2,6 @@
     "files.exclude": {
         "**/.vagrant": true,
         "venv": true,
+        "*.lock": true
     }
 }

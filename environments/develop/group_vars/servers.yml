@@ -1,0 +1,5 @@
+---
+
+private_network: "{{ ansible_eth1['ipv4'] }}"
+public_network: "{{ ansible_eth1['ipv4'] }}"
+docker_network: "{{ ansible_docker0['ipv4'] }}"

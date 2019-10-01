@@ -1,0 +1,23 @@
+---
+
+- name: Install required packages
+  apt:
+    name:
+      - apt-transport-https
+      - binutils
+      - curl
+      - gcc
+      - git
+      - iptables
+      - mc
+      - net-tools
+      - tmux
+      - zsh
+      - python-pip
+    update_cache: yes
+  tags:
+    - common
+
+- import_tasks: locale.yml
+  tags:
+    - common

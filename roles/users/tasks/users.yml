@@ -1,0 +1,30 @@
+---
+
+- name: Add group
+  group: name="{{ item.group }}" state=present
+  with_items: "{{ users }}"
+
+- name: Add user
+  user:
+    name: "{{ item.name }}"
+    password: "{{ lookup('password', '{{ credentials_path }}/{{ inventory_hostname }}/users/{{ item.name }}/auth_password length=32')|password_hash('sha512') }}"  # noqa 204
+    shell: /bin/zsh
+    groups: "{{ item.group }}"
+    append: yes
+  with_items: "{{ users }}"
+
+- name: Allow user to have passwordless sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '{{ item.name }}'
+    line: '%{{ item.name }} ALL=(ALL) NOPASSWD: ALL'
+  when: item.sudoer|default(False)
+  with_items: "{{ users }}"
+
+- name: Add user authorized key
+  authorized_key:
+    user: "{{ item.name }}"
+    state: present
+    key: "{{ lookup('file', '{{ credentials_path }}/{{ inventory_hostname }}/users/{{ item.name }}/id_rsa.pub') }}"  # noqa 204
+  with_items: "{{ users }}"

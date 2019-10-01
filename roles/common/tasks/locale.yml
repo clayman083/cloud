@@ -1,0 +1,24 @@
+---
+
+- name: Install locales
+  locale_gen:
+    name: "{{ item }}"
+  with_items:
+    - en_US.UTF-8
+    - ru_RU.UTF-8
+
+- name: Generate locales
+  debconf:
+    name: locales
+    question: locales/locales_to_be_generated
+    value: en_US.UTF-8 UTF-8, ru_RU.UTF-8 UTF-8
+    vtype: multiselect
+  become: true
+
+- name: Set default locale to ru_RU.UTF-8
+  debconf:
+    name: locales
+    question: locales/default_environment_locale
+    value: ru_RU.UTF-8
+    vtype: select
+  become: true
