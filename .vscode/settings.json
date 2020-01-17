@@ -3,5 +3,11 @@
         "**/.vagrant": true,
         "venv": true,
         "*.lock": true
-    }
+    },
+    "python.pythonPath": ".venv/bin/python3.7",
+    "python.autoComplete.extraPaths": [
+        "${workspaceFolder}",
+        "${workspaceFolder}/.venv/lib/python3.7",
+        "${workspaceFolder}/.venv/lib/python3.7/site-packages"
+    ]
 }

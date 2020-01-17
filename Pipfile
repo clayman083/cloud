@@ -4,9 +4,9 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [packages]
-ansible = "==2.8.5"
-ansible-lint = "==4.1.0"
+ansible = "*"
+ansible-lint = "*"
 passlib = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.8"

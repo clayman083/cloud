@@ -1,0 +1,27 @@
+---
+
+domains:
+  - name: consul
+    backend:
+      name: consul_backend
+      service: consul
+    consul:
+      host: "consul.service.consul"
+      port: "{{ consul.port }}"
+      template: ../consul/templates/consul-template.j2
+    certificate:
+      cert: "{{ inventory_dir }}/.certificates/domains/consul/consul.pem"
+      key: "{{ inventory_dir }}/.certificates/domains/consul/consul.key"
+    domain: consul.dev.clayman.pro
+  - name: vault
+    backend:
+      name: vault_backend
+      service: vault
+    consul:
+      host: "consul.service.consul"
+      port: "{{ consul.port }}"
+      template: ../vault/templates/consul-template.j2
+    certificate:
+      cert: "{{ inventory_dir }}/.certificates/domains/vault/vault.pem"
+      key: "{{ inventory_dir }}/.certificates/domains/vault/vault.key"
+    domain: vault.dev.clayman.pro

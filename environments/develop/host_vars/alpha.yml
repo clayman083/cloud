@@ -1,0 +1,85 @@
+---
+
+consul:
+  agent:
+    server: yes
+
+    encrypt: 'Wy5DY9a+eUr2VRUAjVhvuye9rdCFncxY'
+
+    servers:
+      - alpha
+
+  container:
+    syslog:
+      enabled: yes
+
+  exporter:
+    enabled: yes
+
+    container:
+      syslog:
+        enabled: yes
+
+
+consul_services:
+  - name: consul
+    entries:
+      - name: consul-exporter
+        host: "{{ consul.exporter.host }}"
+        port: "{{ consul.exporter.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          tier: "{{ env }}"
+        checks:
+          - id: "consul_exporter_check"
+            name: "Prometheus exporter for Consul"
+            http: "http://{{ consul.exporter.host }}:{{ consul.exporter.port }}"
+            interval: "20s"
+  - name: nginx
+    entries:
+      - name: nginx-exporter
+        host: "{{ nginx.exporter.host }}"
+        port: "{{ nginx.exporter.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          tier: "{{ env }}"
+        checks:
+          - id: "nginx_exporter_check"
+            name: "Prometheus exporter for Nginx"
+            http: "http://{{ nginx.exporter.host }}:{{ nginx.exporter.port }}"
+            interval: "20s"
+
+
+nginx:
+  service_dir: "{{ services_dir }}/nginx"
+  certs_dir: "{{ services_dir }}/nginx/certs"
+  conf_dir: "{{ services_dir }}/nginx/conf.d"
+  logs_dir: "/var/log/nginx"
+  services_dir: "{{ services_dir }}/nginx/service"
+  templates_dir: "{{ services_dir }}/nginx/consul-templates"
+
+  letsencrypt:
+    enabled: no
+
+    domains: []
+
+  certificates: []
+
+  container:
+    image: clayman083/nginx
+    name: nginx
+    dns: "{{ private_network.address }}"
+    restart: always
+
+    syslog:
+      enabled: no
+      host: unixgram:///dev/log
+      tag: nginx
+
+  exporter:
+    host: "{{ private_network.address }}"
+    port: 3093

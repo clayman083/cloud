@@ -9,3 +9,9 @@ bravo
 
 [servers:vars]
 ansible_user=clayman
+
+[secrets]
+bravo
+
+[loadbalancers]
+alpha

@@ -7,6 +7,7 @@ credentials_path: "{{ inventory_dir }}/.credentials/"
 
 services_dir: /opt/services
 
+
 # Users settings
 users:
   - name: clayman
@@ -16,3 +17,62 @@ users:
     group: backups
   - name: travis
     group: travis
+
+
+# Certificates settings
+certificates:
+  dir: "{{ inventory_dir }}/.certificates"
+
+  authority:
+    common_name: Development CA
+    days: 3650
+
+  certificates:
+    - name: consul
+      path: domains/consul
+      days: 365
+      domains:
+        - dev.clayman.pro
+        - consul.dev.clayman.pro
+
+    - name: vault
+      path: domains/vault
+      days: 365
+      domains:
+        - dev.clayman.pro
+        - vault.dev.clayman.pro
+
+    - name: prometheus
+      path: domains/prometheus
+      days: 365
+      domains:
+        - dev.clayman.pro
+        - prometheus.dev.clayman.pro
+
+    - name: grafana
+      path: domains/grafana
+      days: 365
+      domains:
+        - dev.clayman.pro
+        - grafana.dev.clayman.pro
+
+    - name: apollo
+      path: domains/apollo
+      days: 365
+      domains:
+        - dev.clayman.pro
+        - apollo.dev.clayman.pro
+
+    - name: passport
+      path: domains/passport
+      days: 365
+      domains:
+        - dev.clayman.pro
+        - passport.dev.clayman.pro
+
+    - name: wallet
+      path: domains/wallet
+      days: 365
+      domains:
+        - dev.clayman.pro
+        - wallet.dev.clayman.pro

@@ -1,0 +1,34 @@
+---
+
+consul:
+  agent:
+    encrypt: 'Wy5DY9a+eUr2VRUAjVhvuye9rdCFncxY'
+
+    servers:
+      - alpha
+
+  container:
+    syslog:
+      enabled: yes
+
+
+vault:
+  host: "{{ private_network.address }}"
+  port: 8200
+
+  container:
+    syslog:
+      enabled: true
+
+
+consul_services:
+  - name: vault
+    entries:
+      - name: vault
+        host: "{{ vault.host }}"
+        port: "{{ vault.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          tier: "{{ env }}"
