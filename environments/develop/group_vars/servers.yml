@@ -52,3 +52,95 @@ consul:
         enabled: true
         host: unixgram:///dev/log
         tag: consul_exporter
+
+
+prometheus:
+  dir: "{{ services_dir }}/prometheus"
+  rules_dir: "{{ services_dir }}/prometheus/rules.d"
+
+  node_exporter:
+    host: "{{ private_network.address }}"
+    port: 9100
+
+    container:
+      image: prom/node-exporter:v0.18.1
+      name: node_exporter
+      dns: "{{ private_network.address }}"
+      network: ""
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: node_exporter
+
+  cadvisor_exporter:
+    host: "{{ private_network.address }}"
+    port: 8800
+
+    container:
+      image: gcr.io/google-containers/cadvisor:v0.34.0
+      name: cadvisor_exporter
+      dns: "{{ private_network.address }}"
+      network: ""
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: cadvisor_exporter
+
+  docker_exporter:
+    host: "{{ private_network.address }}"
+    port: 9323
+
+  server:
+    enabled: false
+
+    host: "{{ private_network.address }}"
+    port: 9090
+
+    storage_retention: 90d
+
+    exporters: []
+
+    services: []
+
+    rules:
+      - node.rules.yml
+
+    container:
+      image: prom/prometheus:v2.15.2
+      name: prometheus
+      dns: "{{ private_network.address }}"
+      network: ""
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: prometheus
+
+  alertmanager:
+    enabled: false
+
+    host: "{{ private_network.address }}"
+    port: 9093
+
+    container:
+      name: alertmanager
+      image: prom/alertmanager:v0.20.0
+      dns: "{{ private_network.address }}"
+      network: ""
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: alertmanager
+
+    slack:
+      enabled: no
+      api_url: ''
+      channel: 'general'
+      username: 'Prometheus'

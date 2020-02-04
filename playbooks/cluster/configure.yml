@@ -25,8 +25,8 @@
   roles:
     - role: dnsmasq
     - role: consul
+    - role: prometheus
     # - role: loki
-    # - role: prometheus
 
   tasks:
     - name: Add exporter to Consul Catalog
@@ -46,10 +46,14 @@
 
   tasks:
     - name: Generate htpasswd for traefik
-      htpasswd:
-        path: "{{ traefik.conf_dir }}/consul.htpasswd"
-        name: consul
-        password: consul
+      htpasswd: path={{ item.path }} name={{ item.name }} password={{ item.password }}
+      with_items:
+        - path: "{{ traefik.conf_dir }}/consul.htpasswd"
+          name: consul
+          password: consul
+        - path: "{{ traefik.conf_dir }}/prometheus.htpasswd"
+          name: prometheus
+          password: prometheus
       tags:
         - traefik
 

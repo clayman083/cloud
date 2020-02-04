@@ -13,11 +13,11 @@
   name: dnsmasq
 
 - src: https://github.com/clayman74/ansible-consul
-  version: v1.1.0
+  version: v1.2.0
   name: consul
 
 - src: https://github.com/clayman74/ansible-vault
-  version: v1.0.0
+  version: v0.2.0
   name: vault
 
 - src: https://github.com/clayman74/ansible-nginx
@@ -25,13 +25,21 @@
   name: nginx
 
 - src: https://github.com/clayman74/ansible-postgresql
-  version: v0.2.0
+  version: v0.2.1
   name: postgresql
 
-# - src: https://github.com/clayman74/ansible-prometheus
-#   version: v0.2.0
-#   name: prometheus
+- src: https://github.com/clayman74/ansible-traefik
+  version: v0.3.0
+  name: traefik
 
-# - src: https://github.com/clayman74/ansible-grafana
-#   version: v0.1.0
-#   name: grafana
+- src: https://github.com/clayman74/ansible-grafana
+  version: v0.2.0
+  name: grafana
+
+- src: https://github.com/clayman74/ansible-prometheus
+  version: v0.3.0
+  name: prometheus
+
+# - src: https://github.com/clayman74/ansible-loki
+#   version: v0.2.0
+#   name: loki

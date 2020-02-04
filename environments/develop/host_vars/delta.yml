@@ -1,5 +1,36 @@
 ---
 
+prometheus:
+  server:
+    enabled: yes
+
+    host: "{{ private_network.address }}"
+    port: 9090
+
+    storage_retention: 90d
+
+    exporters:
+      - node-exporter
+      - cadvisor-exporter
+      - docker-exporter
+      - loki-exporter
+      - promtail-exporter
+      - traefik-exporter
+
+    services:
+      - passport
+      - wallet
+
+  alertmanager:
+    enabled: no
+
+    slack:
+      enabled: no
+      api_url: ''
+      channel: 'general'
+      username: 'Prometheus'
+
+
 # Grafana settings
 grafana:
   dir: "{{ services_dir }}/grafana"
@@ -81,6 +112,69 @@ services:
         meta:
           hostname: "{{ ansible_hostname }}"
           tier: "{{ env }}"
+
+  - name: prometheus
+    entries:
+      - name: prometheus
+        host: "{{ prometheus.server.host }}"
+        port: "{{ prometheus.server.port }}"
+        tags:
+          - "{{ env }}"
+          - "traefik.enable=true"
+          - "traefik.http.routers.prometheus.rule=Host(`prometheus.dev.clayman.pro`)"
+          - "traefik.http.routers.prometheus.entrypoints=web"
+          - "traefik.http.routers.prometheus.service=prometheus"
+          - "traefik.http.routers.prometheus.middlewares=prometheus-redirect@consulcatalog"
+          - "traefik.http.routers.prometheus-secure.rule=Host(`prometheus.dev.clayman.pro`)"
+          - "traefik.http.routers.prometheus-secure.entrypoints=websecure"
+          - "traefik.http.routers.prometheus-secure.service=prometheus"
+          - "traefik.http.routers.prometheus-secure.middlewares=prometheus-auth@consulcatalog"
+          - "traefik.http.routers.prometheus-secure.tls=true"
+          - "traefik.http.middlewares.prometheus-auth.basicauth.usersfile=/etc/traefik/conf.d/prometheus.htpasswd"
+          - "traefik.http.middlewares.prometheus-redirect.redirectscheme.scheme=https"
+          - "traefik.http.middlewares.prometheus-redirect.redirectscheme.permanent=true"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          tier: "{{ env }}"
+      - name: node-exporter
+        host: "{{ prometheus.node_exporter.host }}"
+        port: "{{ prometheus.node_exporter.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          tier: "{{ env }}"
+        checks:
+          - id: "node_exporter_check"
+            name: "Prometheus exporter for Node metrics"
+            http: "http://{{ prometheus.node_exporter.host }}:{{ prometheus.node_exporter.port }}"
+            interval: "20s"
+      - name: cadvisor-exporter
+        host: "{{ prometheus.cadvisor_exporter.host }}"
+        port: "{{ prometheus.cadvisor_exporter.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          tier: "{{ env }}"
+        checks:
+          - id: "cadvisor_exporter_check"
+            name: "Prometheus exporter for Cadvisor metrics"
+            http: "http://{{ prometheus.cadvisor_exporter.host }}:{{ prometheus.cadvisor_exporter.port }}"
+            interval: "20s"
+      - name: docker-exporter
+        host: "{{ prometheus.docker_exporter.host }}"
+        port: "{{ prometheus.docker_exporter.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          tier: "{{ env }}"
+        checks:
+          - id: "docker_exporter_check"
+            name: "Prometheus exporter for Docker engine metrics"
+            http: "http://{{ prometheus.docker_exporter.host }}:{{ prometheus.docker_exporter.port }}/metrics"
+            interval: "20s"
 
   - name: vault
     entries:

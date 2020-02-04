@@ -102,3 +102,44 @@ services:
             name: "Prometheus exporter for Postgresql"
             http: "http://{{ postgresql.exporter.host }}:{{ postgresql.exporter.port }}"
             interval: "20s"
+  - name: prometheus
+    entries:
+      - name: node-exporter
+        host: "{{ prometheus.node_exporter.host }}"
+        port: "{{ prometheus.node_exporter.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          tier: "{{ env }}"
+        checks:
+          - id: "node_exporter_check"
+            name: "Prometheus exporter for Node metrics"
+            http: "http://{{ prometheus.node_exporter.host }}:{{ prometheus.node_exporter.port }}"
+            interval: "20s"
+      - name: cadvisor-exporter
+        host: "{{ prometheus.cadvisor_exporter.host }}"
+        port: "{{ prometheus.cadvisor_exporter.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          tier: "{{ env }}"
+        checks:
+          - id: "cadvisor_exporter_check"
+            name: "Prometheus exporter for Cadvisor metrics"
+            http: "http://{{ prometheus.cadvisor_exporter.host }}:{{ prometheus.cadvisor_exporter.port }}"
+            interval: "20s"
+      - name: docker-exporter
+        host: "{{ prometheus.docker_exporter.host }}"
+        port: "{{ prometheus.docker_exporter.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          tier: "{{ env }}"
+        checks:
+          - id: "docker_exporter_check"
+            name: "Prometheus exporter for Docker engine metrics"
+            http: "http://{{ prometheus.docker_exporter.host }}:{{ prometheus.docker_exporter.port }}/metrics"
+            interval: "20s"
