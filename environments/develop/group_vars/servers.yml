@@ -4,7 +4,51 @@ private_network: "{{ ansible_eth1['ipv4'] }}"
 public_network: "{{ ansible_eth1['ipv4'] }}"
 docker_network: "{{ ansible_docker0['ipv4'] }}"
 
-
 consul:
+  service: consul.service.consul
+
+  dnsmasq_conf_dir: /etc/dnsmasq.d
+  service_dir: "{{ services_dir }}/consul"
+  conf_dir: "{{ services_dir }}/consul/conf.d"
+
+  host: "{{ private_network.address }}"
+  port: 8500
+
+  agent:
+    server: false
+
+    datacenter: dc
+    node: "{{ ansible_hostname }}"
+
+    encrypt: "{{ lookup('file', '{{ credentials_path }}/services/consul/consul.encrypt') }}"
+
+    servers: "{{ groups['service-discovery'] }}"
+
+  container:
+    image: consul:1.6
+    name: consul
+    restart: always
+    network: ''
+
+    syslog:
+      enabled: true
+      host: unixgram:///dev/log
+      tag: consul
+
+  exporter:
+    enabled: false
+
     host: "{{ private_network.address }}"
-    port: 8500
+    port: 9107
+
+    container:
+      image: prom/consul-exporter:v0.6.0
+      name: consul_exporter
+      dns: "{{ private_network.address }}"
+      network: ''
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: consul_exporter

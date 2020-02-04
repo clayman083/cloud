@@ -25,14 +25,15 @@
   roles:
     - role: dnsmasq
     - role: consul
+    # - role: loki
+    # - role: prometheus
 
   tasks:
     - name: Add exporter to Consul Catalog
-      include_role:
+      import_role:
         name: consul
         tasks_from: services
-      vars:
-        services: "{{ consul_services|default([]) }}"
+      when: services|default(False)
       tags:
         - consul
 
@@ -41,14 +42,34 @@
   become: true
 
   roles:
-    - role: nginx
+    - role: traefik
 
   tasks:
-    - name: Add service config to Nginx
-      include_role:
-        name: nginx
-        tasks_from: domains
+    - name: Generate htpasswd for traefik
+      htpasswd:
+        path: "{{ traefik.conf_dir }}/consul.htpasswd"
+        name: consul
+        password: consul
       tags:
-        - nginx
+        - traefik
 
 
+- hosts: databases
+  become: true
+
+  roles:
+    - role: postgresql
+
+
+- hosts: monitoring
+  become: true
+
+  roles:
+    - role: grafana
+
+
+- hosts: secrets
+  become: true
+
+  roles:
+    - role: vault

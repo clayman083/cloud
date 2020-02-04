@@ -2,10 +2,12 @@ localhost ansible_connection=local
 
 alpha       ansible_host=192.168.50.10 ansible_ssh_private_key_file=./environments/develop/.vagrant/machines/alpha/virtualbox/private_key
 bravo       ansible_host=192.168.50.11 ansible_ssh_private_key_file=./environments/develop/.vagrant/machines/bravo/virtualbox/private_key
+delta       ansible_host=192.168.50.12 ansible_ssh_private_key_file=./environments/develop/.vagrant/machines/delta/virtualbox/private_key
 
 [servers]
 alpha
 bravo
+delta
 
 [servers:vars]
 ansible_user=vagrant

@@ -1,34 +1,104 @@
 ---
 
-consul:
-  agent:
-    encrypt: 'Wy5DY9a+eUr2VRUAjVhvuye9rdCFncxY'
+postgresql:
+  version: 11
 
-    servers:
-      - alpha
+  postgis:
+    enabled: no
+    version: 2.5
 
-  container:
-    syslog:
-      enabled: yes
+  config:
+    max_connections: '20'
+    superuser_reserved_connections: '3'
+    shared_buffers: '128MB'
 
+    work_mem: '16MB'
+    maintenance_work_mem: '64MB'
+    effective_cache_size: '64MB'
 
-vault:
-  host: "{{ private_network.address }}"
-  port: 8200
+    autovacuum: on
+    autovacuum_max_workers: 1
 
-  container:
-    syslog:
-      enabled: true
+    log_min_duration_statement: 1000
+    logging_collector: 'off'
 
+  allowed_networks:
+    - 172.0.0.0/8  # Docker network
+    - "{{ private_network['network'] }}/24"  # Private cluster network
 
-consul_services:
-  - name: vault
+  server:
+    host: "{{ private_network.address }}"
+    port: 5432
+
+  service_dir: "{{ services_dir }}/postgresql"
+
+  users:
+    prometheus:
+      user: prometheus
+      password: prometheus
+    backups:
+      user: backups
+      password: backups
+    passport:
+      user: passport
+      password: passport
+    wallet:
+      user: wallet
+      password: wallet
+    shortner:
+      user: shortner
+      password: shortner
+
+  databases:
+    passport:
+      name: passport
+      owner: passport
+    wallet:
+      name: wallet
+      owner: wallet
+    shortner:
+      name: shortner
+      owner: shortner
+
+  extensions: {}
+
+  exporter:
+    enabled: yes
+
+    host: "{{ private_network.address }}"
+    port: 9187
+
+    container:
+      image: wrouesnel/postgres_exporter
+      name: postgresql_exporter
+      dns: "{{ private_network.address }}"
+      restart: always
+
+    schema: prometheus
+    user: prometheus
+    password: prometheus
+
+services:
+  - name: postgresql
     entries:
-      - name: vault
-        host: "{{ vault.host }}"
-        port: "{{ vault.port }}"
+      - name: postgresql
+        host: "{{ postgresql.server.host }}"
+        port: "{{ postgresql.server.port }}"
         tags:
           - "{{ env }}"
         meta:
           hostname: "{{ ansible_hostname }}"
           tier: "{{ env }}"
+      - name: postgresql-exporter
+        host: "{{ postgresql.exporter.host }}"
+        port: "{{ postgresql.exporter.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          tier: "{{ env }}"
+        checks:
+          - id: "postgresql_exporter_check"
+            name: "Prometheus exporter for Postgresql"
+            http: "http://{{ postgresql.exporter.host }}:{{ postgresql.exporter.port }}"
+            interval: "20s"

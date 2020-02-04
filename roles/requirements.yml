@@ -24,6 +24,10 @@
   version: v0.3.0
   name: nginx
 
+- src: https://github.com/clayman74/ansible-postgresql
+  version: v0.2.0
+  name: postgresql
+
 # - src: https://github.com/clayman74/ansible-prometheus
 #   version: v0.2.0
 #   name: prometheus

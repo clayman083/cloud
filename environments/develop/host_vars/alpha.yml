@@ -2,28 +2,36 @@
 
 consul:
   agent:
-    server: yes
-
-    encrypt: 'Wy5DY9a+eUr2VRUAjVhvuye9rdCFncxY'
-
-    servers:
-      - alpha
-
-  container:
-    syslog:
-      enabled: yes
+    server: true
 
   exporter:
-    enabled: yes
-
-    container:
-      syslog:
-        enabled: yes
+    enabled: true
 
 
-consul_services:
+services:
   - name: consul
     entries:
+      - name: consul-web
+        host: "{{ consul.host }}"
+        port: "{{ consul.port }}"
+        tags:
+          - "{{ env }}"
+          - "traefik.enable=true"
+          - "traefik.http.routers.consul-web.rule=Host(`consul.dev.clayman.pro`)"
+          - "traefik.http.routers.consul-web.entrypoints=web"
+          - "traefik.http.routers.consul-web.service=consul-web"
+          - "traefik.http.routers.consul-web.middlewares=consul-web-redirect@consulcatalog"
+          - "traefik.http.routers.consul-web-secure.rule=Host(`consul.dev.clayman.pro`)"
+          - "traefik.http.routers.consul-web-secure.entrypoints=websecure"
+          - "traefik.http.routers.consul-web-secure.service=consul-web"
+          - "traefik.http.routers.consul-web-secure.middlewares=consul-web-auth@consulcatalog"
+          - "traefik.http.routers.consul-web-secure.tls=true"
+          - "traefik.http.middlewares.consul-web-auth.basicauth.usersfile=/etc/traefik/conf.d/consul.htpasswd"
+          - "traefik.http.middlewares.consul-web-redirect.redirectscheme.scheme=https"
+          - "traefik.http.middlewares.consul-web-redirect.redirectscheme.permanent=true"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          tier: "{{ env }}"
       - name: consul-exporter
         host: "{{ consul.exporter.host }}"
         port: "{{ consul.exporter.port }}"
@@ -37,49 +45,75 @@ consul_services:
             name: "Prometheus exporter for Consul"
             http: "http://{{ consul.exporter.host }}:{{ consul.exporter.port }}"
             interval: "20s"
-  - name: nginx
+
+  - name: traefik
     entries:
-      - name: nginx-exporter
-        host: "{{ nginx.exporter.host }}"
-        port: "{{ nginx.exporter.port }}"
+      # - name: traefik
+      #   host: "{{ traefik.host }}"
+      #   port: "{{ traefik.port }}"
+      #   tags:
+      #     - "{{ env }}"
+      #   meta:
+      #     hostname: "{{ ansible_hostname }}"
+      #     tier: "{{ env }}"
+      - name: traefik-exporter
+        host: "{{ traefik.exporter.host }}"
+        port: "{{ traefik.exporter.port }}"
         tags:
           - "{{ env }}"
         meta:
           hostname: "{{ ansible_hostname }}"
           tier: "{{ env }}"
-        checks:
-          - id: "nginx_exporter_check"
-            name: "Prometheus exporter for Nginx"
-            http: "http://{{ nginx.exporter.host }}:{{ nginx.exporter.port }}"
-            interval: "20s"
 
 
-nginx:
-  service_dir: "{{ services_dir }}/nginx"
-  certs_dir: "{{ services_dir }}/nginx/certs"
-  conf_dir: "{{ services_dir }}/nginx/conf.d"
-  logs_dir: "/var/log/nginx"
-  services_dir: "{{ services_dir }}/nginx/service"
-  templates_dir: "{{ services_dir }}/nginx/consul-templates"
+traefik:
+  service: traefik.service.consul
 
-  letsencrypt:
-    enabled: no
+  service_dir: "{{ services_dir }}/traefik"
+  certs_dir: "{{ services_dir }}/traefik/certs"
+  conf_dir: "{{ services_dir }}/traefik/conf.d"
 
-    domains: []
+  entrypoints:
+    insecure:
+      host: "{{ public_network.address }}"
+      port: 80
+    secure:
+      host: "{{ public_network.address }}"
+      port: 443
+    traefik:
 
-  certificates: []
+  api:
+    host: "{{ private_network.address }}"
+    port: 8081
+
+  consul:
+    enabled: true
+    host: "{{ consul.host }}"
+    port: "{{ consul.port }}"
 
   container:
-    image: clayman083/nginx
-    name: nginx
-    dns: "{{ private_network.address }}"
+    image: traefik:v2.1.3
+    name: traefik
     restart: always
+    network: ''
+    dns: "{{ private_network.address }}"
 
     syslog:
-      enabled: no
+      enabled: false
       host: unixgram:///dev/log
-      tag: nginx
+      tag: traefik
 
   exporter:
+    enabled: true
+
     host: "{{ private_network.address }}"
-    port: 3093
+    port: 8080
+
+  certificates:
+    - cert: "{{ services_dir }}/traefik/certs/consul.pem"
+      key: "{{ services_dir }}/traefik/certs/consul.key"
+    - cert: "{{ services_dir }}/traefik/certs/grafana.pem"
+      key: "{{ services_dir }}/traefik/certs/grafana.key"
+    - cert: "{{ services_dir }}/traefik/certs/vault.pem"
+      key: "{{ services_dir }}/traefik/certs/vault.key"
+
