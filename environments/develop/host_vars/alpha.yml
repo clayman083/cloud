@@ -1,5 +1,16 @@
 ---
 
+swarm_node_labels:
+  tier: production
+
+swarm_networks:
+  - name: backend
+    attachable: true
+    driver: overlay
+    ipam_config:
+      - subnet: 10.8.0.0/24
+
+
 consul:
   agent:
     server: true

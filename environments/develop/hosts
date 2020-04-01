@@ -1,16 +1,40 @@
 localhost ansible_connection=local
 
-alpha       ansible_host=192.168.50.10 ansible_ssh_private_key_file=./environments/develop/.credentials/alpha/users/clayman/id_rsa
-bravo       ansible_host=192.168.50.11 ansible_ssh_private_key_file=./environments/develop/.credentials/bravo/users/clayman/id_rsa
-delta       ansible_host=192.168.50.12 ansible_ssh_private_key_file=./environments/develop/.credentials/delta/users/clayman/id_rsa
+[servers:children]
+swarm
 
-[servers]
-alpha
-bravo
-delta
+[swarm:children]
+swarm-master
+swarm-managers
+swarm-workers
 
-[servers:vars]
+[swarm-master]
+alpha ansible_host=192.168.100.10 ansible_ssh_private_key_file=./environments/develop/.credentials/alpha/users/clayman/id_rsa
+
+[swarm-managers]
+bravo ansible_host=192.168.100.11 ansible_ssh_private_key_file=./environments/develop/.credentials/bravo/users/clayman/id_rsa
+delta ansible_host=192.168.100.12 ansible_ssh_private_key_file=./environments/develop/.credentials/delta/users/clayman/id_rsa
+
+[swarm-workers]
+whiskey ansible_host=192.168.100.13 ansible_ssh_private_key_file=./environments/develop/.credentials/whiskey/users/clayman/id_rsa
+yankee ansible_host=192.168.100.14 ansible_ssh_private_key_file=./environments/develop/.credentials/yankee/users/clayman/id_rsa
+zulu ansible_host=192.168.100.15 ansible_ssh_private_key_file=./environments/develop/.credentials/zulu/users/clayman/id_rsa
+
+[swarm:vars]
 ansible_user=clayman
+
+[swarm-master:vars]
+swarm_master=true
+swarm_manager=true
+
+[swarm-managers:vars]
+swarm_manager=true
+swarm_remote_addrs=['192.168.100.10']
+
+[swarm-workers:vars]
+swarm_worker=true
+swarm_remote_addrs=['192.168.100.10', '192.168.100.11', '192.168.100.12']
+
 
 [service-discovery]
 alpha
@@ -22,6 +46,9 @@ alpha
 bravo
 
 [monitoring]
+delta
+
+[logging]
 delta
 
 [secrets]

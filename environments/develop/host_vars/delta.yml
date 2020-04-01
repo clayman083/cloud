@@ -1,5 +1,9 @@
 ---
 
+swarm_node_labels:
+  tier: monitoring
+
+
 prometheus:
   server:
     enabled: yes

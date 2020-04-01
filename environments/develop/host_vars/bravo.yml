@@ -1,5 +1,9 @@
 ---
 
+swarm_node_labels:
+  tier: develop
+
+
 postgresql:
   version: 11
 

@@ -5,7 +5,7 @@
   name: certificates
 
 - src: https://github.com/clayman74/ansible-docker
-  version: 1.2.0
+  version: 1.3.0
   name: docker
 
 - src: https://github.com/clayman74/ansible-dnsmasq
