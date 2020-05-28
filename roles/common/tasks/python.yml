@@ -1,0 +1,58 @@
+---
+
+- name: Install required packages
+  apt:
+    name:
+      - curl
+      - llvm
+      - libbz2-dev
+      - libffi-dev
+      - liblzma-dev
+      - libncurses5-dev
+      - libncursesw5-dev
+      - libreadline-dev
+      - libsqlite3-dev
+      - libssl-dev
+      - tk-dev
+      - xz-utils
+      - zlib1g-dev
+  become: true
+  tags:
+    - python
+
+- name: Install python packages
+  pip:
+    name:
+      - poetry
+      - tox
+  become: true
+  tags:
+    - python
+
+- name: Configure poetry
+  shell: poetry config {{ item }}
+  with_items:
+    - "virtualenvs.in-project true"
+  tags:
+    - python
+
+- name: Install pyenv
+  git:
+    repo: https://github.com/pyenv/pyenv.git
+    dest: /home/{{ ansible_user }}/.pyenv
+    update: no
+  tags:
+    - python
+
+- name: Configure shell
+  blockinfile:
+    path: /home/{{ ansible_user }}/.zshrc
+    block: |
+      export PYENV_ROOT="$HOME/.pyenv"
+      export PATH="$PYENV_ROOT/bin:$PATH"
+
+      if command -v pyenv 1>/dev/null 2>&1; then
+        eval "$(pyenv init -)"
+      fi
+  tags:
+    - python

@@ -19,14 +19,29 @@
         - consul
 
 
+# Configure local swarm cluster
+- hosts: servers
+  become: true
+
+  vars:
+    swarm_tokens_path: "{{ credentials_path }}/services/swarm"
+
+  tasks:
+    - name: Create swarm
+      import_role:
+        name: docker
+        tasks_from: swarm
+      tags:
+        - swarm
+
+
+# Configure service discovery
 - hosts: servers
   become: true
 
   roles:
     - role: dnsmasq
     - role: consul
-    - role: prometheus
-    - role: loki
 
   tasks:
     - name: Add exporter to Consul Catalog
@@ -38,7 +53,26 @@
         - consul
 
 
-- hosts: loadbalancers
+# Configure monitoring
+- hosts: servers
+  become: true
+
+  roles:
+    - role: prometheus
+    - role: loki
+    - role: grafana
+
+
+# Configure databases
+- hosts: servers
+  become: true
+
+  roles:
+    - postgresql
+
+
+# Configure loadbalancers
+- hosts: servers
   become: true
 
   roles:
@@ -60,23 +94,20 @@
       tags:
         - traefik
 
+    - name: Upload certificates
+      import_role:
+        name: traefik
+        tasks_from: certificates
+      vars:
+        certificates: "{{ traefik_certificates }}"
+      when: traefik_certificates|default([])
+      tags:
+        - traefik
 
-- hosts: databases
+
+# Configure services
+- hosts: servers
   become: true
 
   roles:
-    - role: postgresql
-
-
-- hosts: monitoring
-  become: true
-
-  roles:
-    - role: grafana
-
-
-- hosts: secrets
-  become: true
-
-  roles:
-    - role: vault
+    - role: passport

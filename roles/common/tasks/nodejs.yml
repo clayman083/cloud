@@ -1,0 +1,14 @@
+---
+
+- name: Add nodejs sources
+  shell: curl -sL https://deb.nodesource.com/setup_12.x | bash -
+
+- name: Install required packages
+  apt:
+    name:
+      - nodejs
+
+- name: Install yarn
+  npm:
+    name: yarn
+    global: yes

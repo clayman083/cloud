@@ -1,0 +1,17 @@
+---
+
+  # Common settings
+  env: production
+
+  credentials_path: "{{ inventory_dir }}/.credentials"
+
+  services_dir: /opt/services
+
+
+  # Users settings
+  users:
+    - name: clayman
+      group: clayman
+      sudoer: true
+    - name: backups
+      group: backups

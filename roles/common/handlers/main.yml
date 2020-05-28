@@ -1,0 +1,6 @@
+---
+
+- name: apply timezone
+  shell: /usr/sbin/dpkg-reconfigure -f noninteractive tzdata
+  become: true
+  listen: "apply timezone"

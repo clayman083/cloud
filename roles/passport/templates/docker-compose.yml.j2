@@ -1,0 +1,59 @@
+---
+
+version: '3.5'
+
+{% if passport.container.networks|default(False) %}
+networks:
+{% for network in passport.container.networks|default([]) %}
+  {{ network.name }}:
+    external: true
+{% endfor %}
+{% endif %}
+
+services:
+  server:
+    image: {{ passport.container.image }}
+    command:
+      - "python3"
+      - "-m"
+      - "passport"
+      - "--conf-dir=/etc/passport"
+      - "server"
+      - "run"
+      - "--tags={{ env }}"
+      - "--tags=traefik.enable=true"
+      - "--tags=traefik.http.routers.passport.rule=Host(`{{ passport.domain }}`)"
+      - "--tags=traefik.http.routers.passport.entrypoints=web"
+      - "--tags=traefik.http.routers.passport.service=passport"
+      - "--tags=traefik.http.routers.passport.middlewares=passport-redirect@consulcatalog"
+      - "--tags=traefik.http.routers.passport-secure.rule=Host(`{{ passport.domain }}`)"
+      - "--tags=traefik.http.routers.passport-secure.entrypoints=websecure"
+      - "--tags=traefik.http.routers.passport-secure.service=passport"
+      - "--tags=traefik.http.routers.passport-secure.tls=true"
+      - "--tags=traefik.http.middlewares.passport-redirect.redirectscheme.scheme=https"
+      - "--tags=traefik.http.middlewares.passport-redirect.redirectscheme.permanent=true"
+{% if passport.container.dns|default(False) %}
+    dns: {{ passport.container.dns }}
+{% endif%}
+    env_file: .env
+{% if passport.container.labels|default(False) %}
+    labels:
+{% for label in passport.container.labels|default([]) %}
+      - {{ label }}
+{% endfor %}
+{% endif %}
+{% if passport.container.syslog.enabled %}
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "{{ passport.container.syslog.host }}"
+        tag: {{ passport.container.syslog.tag }}
+{% endif %}
+{% if passport.container.networks|default(False) %}
+    networks:
+{% for network in passport.container.networks|default([]) %}
+      - {{ network.name }}
+{% endfor %}
+{% endif %}
+    volumes:
+      - ./conf.d:/etc/passport

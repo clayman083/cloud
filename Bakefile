@@ -1,11 +1,11 @@
 install: install/python install/roles
 
 install/python: @skip=Pipfile.lock
-    pipenv install
+    poetry install
 
 install/roles:
-    pipenv run ansible-galaxy install --roles-path=./roles/vendor -r roles/requirements.yml
+    poetry run ansible-galaxy install --roles-path=./roles/vendor -r roles/requirements.yml
 
 lint:
-    pipenv run ansible-lint roles/*
-    pipenv run ansible-lint playbooks/**/*.yml
+    poetry run ansible-lint roles/*
+    poetry run ansible-lint playbooks/**/*.yml

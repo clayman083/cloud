@@ -7,17 +7,36 @@
       - binutils
       - curl
       - gcc
+      - g++
       - git
       - iptables
       - mc
       - net-tools
       - tmux
       - zsh
+      - python-passlib
       - python-pip
+      - python-setuptools
     update_cache: yes
   tags:
     - common
 
 - import_tasks: locale.yml
+  tags:
+    - common
+
+- name: Configure timezone
+  shell: echo "{{ timezone }}" > /etc/timezone
+  become: true
+  when: "ansible_distribution == 'Debian'"
+  notify: 'apply timezone'
+  tags:
+    - common
+
+- name: return motd to registered var
+  command: "cp /usr/share/zoneinfo/{{ timezone }} /etc/localtime"
+  become: true
+  when: "ansible_distribution == 'Debian'"
+  notify: 'apply timezone'
   tags:
     - common

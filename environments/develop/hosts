@@ -9,16 +9,16 @@ swarm-managers
 swarm-workers
 
 [swarm-master]
-alpha ansible_host=192.168.100.10 ansible_ssh_private_key_file=./environments/develop/.credentials/alpha/users/clayman/id_rsa
+alpha ansible_host=192.168.100.11 ansible_ssh_private_key_file=./environments/develop/.credentials/alpha/users/clayman/id_rsa
 
 [swarm-managers]
-bravo ansible_host=192.168.100.11 ansible_ssh_private_key_file=./environments/develop/.credentials/bravo/users/clayman/id_rsa
-delta ansible_host=192.168.100.12 ansible_ssh_private_key_file=./environments/develop/.credentials/delta/users/clayman/id_rsa
+bravo ansible_host=192.168.100.12 ansible_ssh_private_key_file=./environments/develop/.credentials/bravo/users/clayman/id_rsa
+delta ansible_host=192.168.100.13 ansible_ssh_private_key_file=./environments/develop/.credentials/delta/users/clayman/id_rsa
 
 [swarm-workers]
-whiskey ansible_host=192.168.100.13 ansible_ssh_private_key_file=./environments/develop/.credentials/whiskey/users/clayman/id_rsa
-yankee ansible_host=192.168.100.14 ansible_ssh_private_key_file=./environments/develop/.credentials/yankee/users/clayman/id_rsa
-zulu ansible_host=192.168.100.15 ansible_ssh_private_key_file=./environments/develop/.credentials/zulu/users/clayman/id_rsa
+whiskey ansible_host=192.168.100.14 ansible_ssh_private_key_file=./environments/develop/.credentials/whiskey/users/clayman/id_rsa
+yankee ansible_host=192.168.100.15 ansible_ssh_private_key_file=./environments/develop/.credentials/yankee/users/clayman/id_rsa
+zulu ansible_host=192.168.100.16 ansible_ssh_private_key_file=./environments/develop/.credentials/zulu/users/clayman/id_rsa
 
 [swarm:vars]
 ansible_user=clayman
@@ -29,11 +29,11 @@ swarm_manager=true
 
 [swarm-managers:vars]
 swarm_manager=true
-swarm_remote_addrs=['192.168.100.10']
+swarm_remote_addrs=['192.168.100.11']
 
 [swarm-workers:vars]
 swarm_worker=true
-swarm_remote_addrs=['192.168.100.10', '192.168.100.11', '192.168.100.12']
+swarm_remote_addrs=['192.168.100.11', '192.168.100.12', '192.168.100.13']
 
 
 [service-discovery]

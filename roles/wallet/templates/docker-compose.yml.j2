@@ -1,0 +1,56 @@
+---
+
+version: '3.5'
+
+{% if wallet.container.networks|default(False) %}
+networks:
+{% for network in wallet.container.networks|default([]) %}
+  {{ network.name }}:
+    external: true
+{% endfor %}
+{% endif %}
+
+services:
+  server:
+    image: {{ wallet.container.image }}
+    command:
+      - "--conf-dir=/etc/wallet"
+      - "server"
+      - "run"
+      - "--tags={{ env }}"
+      - "--tags=traefik.enable=true"
+      - "--tags=traefik.http.routers.wallet.rule=Host(`{{ wallet.domain }}`)"
+      - "--tags=traefik.http.routers.wallet.entrypoints=web"
+      - "--tags=traefik.http.routers.wallet.service=wallet"
+      - "--tags=traefik.http.routers.wallet.middlewares=wallet-redirect@consulcatalog"
+      - "--tags=traefik.http.routers.wallet-secure.rule=Host(`{{ passport.domain }}`)"
+      - "--tags=traefik.http.routers.wallet-secure.entrypoints=websecure"
+      - "--tags=traefik.http.routers.wallet-secure.service=wallet"
+      - "--tags=traefik.http.routers.wallet-secure.tls=true"
+      - "--tags=traefik.http.middlewares.wallet-redirect.redirectscheme.scheme=https"
+      - "--tags=traefik.http.middlewares.wallet-redirect.redirectscheme.permanent=true"
+{% if wallet.container.dns|default(False) %}
+    dns: {{ wallet.container.dns }}
+{% endif%}
+    env_file: .env
+{% if wallet.container.labels|default(False) %}
+    labels:
+{% for label in wallet.container.labels|default([]) %}
+      - {{ label }}
+{% endfor %}
+{% endif %}
+{% if wallet.container.syslog.enabled %}
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "{{ wallet.container.syslog.host }}"
+        tag: {{ wallet.container.syslog.tag }}
+{% endif %}
+{% if wallet.container.networks|default(False) %}
+    networks:
+{% for network in wallet.container.networks|default([]) %}
+      - {{ network.name }}
+{% endfor %}
+{% endif %}
+    volumes:
+      - ./conf.d:/etc/wallet

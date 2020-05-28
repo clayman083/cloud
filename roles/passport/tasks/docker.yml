@@ -1,0 +1,19 @@
+---
+
+- name: Prepare folders
+  file: path={{ item }} state=directory
+  with_items:
+    - "{{ passport.service_dir }}"
+    - "{{ passport.conf_dir }}"
+
+- name: Assemble config files
+  template: src={{ item.src }}.j2 dest={{ item.dest }}
+  with_items:
+    - src: docker-compose.yml
+      dest: "{{ passport.service_dir }}/docker-compose.yml"
+    - src: .env
+      dest: "{{ passport.service_dir }}/.env"
+
+- name: Generate RSA keypair for tokens
+  openssh_keypair:
+    path: "{{ passport.conf_dir }}/passport.key"
