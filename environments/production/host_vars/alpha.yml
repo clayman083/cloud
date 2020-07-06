@@ -1,0 +1,644 @@
+---
+
+
+# Swarm settings
+swarm_networks:
+  - name: backend
+    attachable: true
+    driver: overlay
+    ipam_config:
+      - subnet: 10.8.0.0/24
+
+
+# Consul settings
+consul:
+  service: consul.service.consul
+
+  dnsmasq_conf_dir: /etc/dnsmasq.d
+  service_dir: "{{ services_dir }}/consul"
+  conf_dir: "{{ services_dir }}/consul/conf.d"
+
+  host: "{{ private_network.address }}"
+  port: 8500
+
+  agent:
+    server: true
+
+    datacenter: dev
+    node: "{{ ansible_hostname }}"
+
+    encrypt: "{{ lookup('file', '{{ credentials_path }}/services/consul/consul.encrypt') }}"
+
+    servers: "{{ groups['service-discovery'] }}"
+
+  container:
+    image: consul:1.7
+    name: consul
+    restart: always
+    networks:
+      - name: backend
+
+    syslog:
+      enabled: true
+      host: unixgram:///dev/log
+      tag: consul
+
+  exporter:
+    enabled: true
+
+    host: "{{ private_network.address }}"
+    port: 9107
+
+    container:
+      image: prom/consul-exporter:v0.6.0
+      name: consul_exporter
+      dns: "{{ private_network.address }}"
+      networks:
+        - name: backend
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: consul_exporter
+
+
+# Loki settings
+loki:
+  dir: "{{ services_dir }}/loki"
+
+  server:
+    enabled: true
+    host: "{{ private_network.address }}"
+    port: 3100
+
+    container:
+      image: grafana/loki:v1.3.0
+      name: loki
+      dns: "{{ private_network.address }}"
+      networks:
+        - name: backend
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: loki
+
+    exporter:
+      host: "{{ private_network.address }}"
+      port: 3100
+
+  promtail:
+    host: "{{ private_network.address }}"
+    port: 9080
+
+    loki:
+      host: "{{ hostvars[groups['logging'][0]]['private_network']['address'] }}"
+      port: 3100
+
+    syslog:
+      host: "{{ private_network.address }}"
+      port: 1514
+
+    jobs:
+      syslog:
+        labels:
+          tier: "{{ env }}"
+      static: []
+        # - name: postgresql
+        #   labels:
+        #     job: postgresql
+        #     hostname: "{{ ansible_hostname }}"
+        #     tier: "{{ env }}"
+        #   path: /var/log/postgresql/postgresql-11-main.log
+
+    container:
+      image: grafana/promtail:v1.3.0
+      name: promtail
+      dns: "{{ private_network.address }}"
+      networks:
+        - name: backend
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: promtail
+
+
+# Prometheus settings
+prometheus:
+  dir: "{{ services_dir }}/prometheus"
+  rules_dir: "{{ services_dir }}/prometheus/rules.d"
+
+  node_exporter:
+    host: "{{ private_network.address }}"
+    port: 9100
+
+    container:
+      image: prom/node-exporter:v0.18.1
+      name: node_exporter
+      dns: "{{ private_network.address }}"
+      networks:
+        - name: backend
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: node_exporter
+
+  blackbox_exporter:
+    enabled: true
+
+    host: "{{ private_network.address }}"
+    port: 9115
+
+    targets:
+      - "http://{{ domain }}"
+      - "http://consul.{{ domain }}"
+      - "http://grafana.{{ domain }}"
+
+    container:
+      image: prom/blackbox-exporter:v0.14.0
+      name: blackbox_exporter
+      dns: "{{ private_network.address }}"
+      networks:
+        - name: backend
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: blackbox_exporter
+
+  cadvisor_exporter:
+    host: "{{ private_network.address }}"
+    port: 8800
+
+    container:
+      image: gcr.io/google-containers/cadvisor:v0.34.0
+      name: cadvisor_exporter
+      dns: "{{ private_network.address }}"
+      networks:
+        - name: backend
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: cadvisor_exporter
+
+  docker_exporter:
+    host: "{{ private_network.address }}"
+    port: 9323
+
+  server:
+    enabled: true
+
+    host: "{{ private_network.address }}"
+    port: 9090
+
+    storage_retention: 90d
+
+    exporters:
+      - blackbox-exporter
+      - cadvisor-exporter
+      - docker-exporter
+      - loki-exporter
+      - node-exporter
+      - postgresql-exporter
+      - promtail-exporter
+      - traefik-exporter
+
+    services:
+      - apollo
+      - passport
+      - wallet
+
+    rules:
+      - node.rules.yml
+
+    container:
+      image: prom/prometheus:v2.15.2
+      name: prometheus
+      dns: "{{ private_network.address }}"
+      networks:
+        - name: backend
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: prometheus
+
+  alertmanager:
+    enabled: false
+
+    host: "{{ private_network.address }}"
+    port: 9093
+
+    container:
+      name: alertmanager
+      image: prom/alertmanager:v0.20.0
+      dns: "{{ private_network.address }}"
+      networks:
+        - name: backend
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: alertmanager
+
+    slack:
+      enabled: false
+      api_url: ''
+      channel: 'general'
+      username: 'Prometheus'
+
+    webhook:
+      enabled: false
+      receiver: hook
+      url: http://apollo.service.consul:5000/alerts
+
+
+# Grafana settings
+grafana:
+  dir: "{{ services_dir }}/grafana"
+  dashboards_dir: "{{ services_dir }}/grafana/dashboards"
+
+  host: "{{ private_network.address }}"
+  port: 3000
+
+  container:
+    image: grafana/grafana:7.0.1
+    name: grafana
+    dns: "{{ private_network.address }}"
+    network: ""
+    restart: always
+
+    syslog:
+      enabled: yes
+      host: unixgram:///dev/log
+      tag: grafana
+
+  dashboards: []
+
+  datasources:
+    prometheus:
+      name: Prometheus
+      url: http://prometheus.service.consul:9090
+
+    loki:
+      name: Loki
+      url: http://loki.service.consul:3100
+
+  frontend:
+    domain: "https://grafana.{{ domain }}"
+
+
+
+# Postgresql settings
+postgresql:
+  version: 12
+
+  postgis:
+    enabled: no
+    version: 2.5
+
+  config:
+    max_connections: '20'
+    superuser_reserved_connections: '3'
+    shared_buffers: '128MB'
+
+    work_mem: '16MB'
+    maintenance_work_mem: '64MB'
+    effective_cache_size: '64MB'
+
+    autovacuum: on
+    autovacuum_max_workers: 1
+
+    log_min_duration_statement: 1000
+    logging_collector: 'off'
+
+  allowed_networks:
+    - 172.0.0.0/8  # Docker network
+    - "{{ private_network['network'] }}/24"  # Private cluster network
+
+  server:
+    host: "{{ private_network.address }}"
+    port: 5432
+
+  service_dir: "{{ services_dir }}/postgresql"
+
+
+  databases:
+    passport:
+      name: passport
+      owner: passport
+    wallet:
+      name: wallet
+      owner: wallet
+
+  extensions: {}
+
+  exporter:
+    enabled: yes
+
+    host: "{{ private_network.address }}"
+    port: 9187
+
+    container:
+      image: wrouesnel/postgres_exporter
+      name: postgresql_exporter
+      dns: "{{ private_network.address }}"
+      restart: always
+
+
+
+# Traefik settings
+traefik:
+  service: traefik.service.consul
+
+  service_dir: "{{ services_dir }}/traefik"
+  certs_dir: "{{ services_dir }}/traefik/certs"
+  conf_dir: "{{ services_dir }}/traefik/conf.d"
+
+  entrypoints:
+    insecure:
+      host: "{{ public_network.address }}"
+      port: 80
+    secure:
+      host: "{{ public_network.address }}"
+      port: 443
+    traefik:
+
+  letsencrypt:
+    enabled: true
+    email: dev@clayman.pro
+
+  api:
+    host: "{{ private_network.address }}"
+    port: 8081
+
+  consul:
+    enabled: true
+    host: "{{ consul.host }}"
+    port: "{{ consul.port }}"
+
+  container:
+    image: traefik:v2.2.0
+    name: traefik
+    dns: "{{ private_network.address }}"
+    networks:
+      - name: backend
+    restart: always
+
+    syslog:
+      enabled: true
+      host: unixgram:///dev/log
+      tag: traefik
+
+  exporter:
+    enabled: true
+
+    host: "{{ private_network.address }}"
+    port: 8080
+
+
+
+
+services:
+  - name: consul
+    entries:
+      - name: consul-web
+        host: "{{ consul.host }}"
+        port: "{{ consul.port }}"
+        tags:
+          - "{{ env }}"
+          - "traefik.enable=true"
+          - "traefik.http.routers.consul-web.rule=Host(`consul.{{ domain }}`)"
+          - "traefik.http.routers.consul-web.entrypoints=web"
+          - "traefik.http.routers.consul-web.service=consul-web"
+          - "traefik.http.routers.consul-web.middlewares=consul-web-redirect@consulcatalog"
+          - "traefik.http.routers.consul-web-secure.rule=Host(`consul.{{ domain }}`)"
+          - "traefik.http.routers.consul-web-secure.entrypoints=websecure"
+          - "traefik.http.routers.consul-web-secure.service=consul-web"
+          - "traefik.http.routers.consul-web-secure.middlewares=consul-web-auth@consulcatalog"
+          - "traefik.http.routers.consul-web-secure.tls=true"
+          - "traefik.http.routers.consul-web-secure.tls.certresolver=acmeresolver"
+          - "traefik.http.middlewares.consul-web-auth.basicauth.usersfile=/etc/traefik/conf.d/consul.htpasswd"
+          - "traefik.http.middlewares.consul-web-redirect.redirectscheme.scheme=https"
+          - "traefik.http.middlewares.consul-web-redirect.redirectscheme.permanent=true"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          env: "{{ env }}"
+      - name: consul-exporter
+        host: "{{ consul.exporter.host }}"
+        port: "{{ consul.exporter.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          env: "{{ env }}"
+        checks:
+          - id: "consul_exporter_check"
+            name: "Prometheus exporter for Consul"
+            http: "http://{{ consul.exporter.host }}:{{ consul.exporter.port }}"
+            interval: "20s"
+
+  - name: grafana
+    entries:
+      - name: grafana
+        host: "{{ grafana.host }}"
+        port: "{{ grafana.port }}"
+        tags:
+          - "{{ env }}"
+          - "traefik.enable=true"
+          - "traefik.http.routers.grafana.rule=Host(`grafana.{{ domain }}`)"
+          - "traefik.http.routers.grafana.entrypoints=web"
+          - "traefik.http.routers.grafana.service=grafana"
+          - "traefik.http.routers.grafana.middlewares=grafana-redirect@consulcatalog"
+          - "traefik.http.routers.grafana-secure.rule=Host(`grafana.{{ domain }}`)"
+          - "traefik.http.routers.grafana-secure.entrypoints=websecure"
+          - "traefik.http.routers.grafana-secure.service=grafana"
+          - "traefik.http.routers.grafana-secure.tls=true"
+          - "traefik.http.routers.grafana-secure.tls.certresolver=acmeresolver"
+          - "traefik.http.middlewares.grafana-redirect.redirectscheme.scheme=https"
+          - "traefik.http.middlewares.grafana-redirect.redirectscheme.permanent=true"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          env: "{{ env }}"
+
+  - name: loki
+    entries:
+      - name: loki
+        host: "{{ loki.server.host }}"
+        port: "{{ loki.server.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          env: "{{ env }}"
+      - name: loki-exporter
+        host: "{{ loki.server.exporter.host }}"
+        port: "{{ loki.server.exporter.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          env: "{{ env }}"
+        checks:
+          - id: "loki_exporter_check"
+            name: "Prometheus exporter for Loki metrics"
+            http: "http://{{ loki.server.exporter.host }}:{{ loki.server.exporter.port }}/ready"
+            interval: "20s"
+      - name: promtail-exporter
+        host: "{{ loki.promtail.host }}"
+        port: "{{ loki.promtail.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          env: "{{ env }}"
+        checks:
+          - id: "promtail_exporter_check"
+            name: "Prometheus exporter for Promtail metrics"
+            http: "http://{{ loki.promtail.host }}:{{ loki.promtail.port }}"
+            interval: "20s"
+
+  - name: postgresql
+    entries:
+      - name: postgresql
+        host: "{{ postgresql.server.host }}"
+        port: "{{ postgresql.server.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          env: "{{ env }}"
+      - name: postgresql-exporter
+        host: "{{ postgresql.exporter.host }}"
+        port: "{{ postgresql.exporter.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          env: "{{ env }}"
+        checks:
+          - id: "postgresql_exporter_check"
+            name: "Prometheus exporter for Postgresql"
+            http: "http://{{ postgresql.exporter.host }}:{{ postgresql.exporter.port }}"
+            interval: "20s"
+
+  - name: prometheus
+    entries:
+      - name: alertmanager
+        host: "{{ prometheus.alertmanager.host }}"
+        port: "{{ prometheus.alertmanager.port }}"
+        tags:
+          - "{{ env }}"
+          - "traefik.enable=true"
+          - "traefik.http.routers.alertmanager.rule=Host(`alerts.{{ domain }}`)"
+          - "traefik.http.routers.alertmanager.entrypoints=web"
+          - "traefik.http.routers.alertmanager.service=alertmanager"
+          - "traefik.http.routers.alertmanager.middlewares=alertmanager-redirect@consulcatalog"
+          - "traefik.http.routers.alertmanager-secure.rule=Host(`alerts.{{ domain }}`)"
+          - "traefik.http.routers.alertmanager-secure.entrypoints=websecure"
+          - "traefik.http.routers.alertmanager-secure.service=alertmanager"
+          - "traefik.http.routers.alertmanager-secure.middlewares=alertmanager-auth@consulcatalog"
+          - "traefik.http.routers.alertmanager-secure.tls=true"
+          - "traefik.http.routers.alertmanager-secure.tls.certresolver=acmeresolver"
+          - "traefik.http.middlewares.alertmanager-auth.basicauth.usersfile=/etc/traefik/conf.d/alertmanager.htpasswd"
+          - "traefik.http.middlewares.alertmanager-redirect.redirectscheme.scheme=https"
+          - "traefik.http.middlewares.alertmanager-redirect.redirectscheme.permanent=true"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          env: "{{ env }}"
+      - name: prometheus
+        host: "{{ prometheus.server.host }}"
+        port: "{{ prometheus.server.port }}"
+        tags:
+          - "{{ env }}"
+          - "traefik.enable=true"
+          - "traefik.http.routers.prometheus.rule=Host(`prometheus.{{ domain }}`)"
+          - "traefik.http.routers.prometheus.entrypoints=web"
+          - "traefik.http.routers.prometheus.service=prometheus"
+          - "traefik.http.routers.prometheus.middlewares=prometheus-redirect@consulcatalog"
+          - "traefik.http.routers.prometheus-secure.rule=Host(`prometheus.{{ domain }}`)"
+          - "traefik.http.routers.prometheus-secure.entrypoints=websecure"
+          - "traefik.http.routers.prometheus-secure.service=prometheus"
+          - "traefik.http.routers.prometheus-secure.middlewares=prometheus-auth@consulcatalog"
+          - "traefik.http.routers.prometheus-secure.tls=true"
+          - "traefik.http.routers.prometheus-secure.tls.certresolver=acmeresolver"
+          - "traefik.http.middlewares.prometheus-auth.basicauth.usersfile=/etc/traefik/conf.d/prometheus.htpasswd"
+          - "traefik.http.middlewares.prometheus-redirect.redirectscheme.scheme=https"
+          - "traefik.http.middlewares.prometheus-redirect.redirectscheme.permanent=true"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          env: "{{ env }}"
+      - name: blackbox-exporter
+        host: "{{ prometheus.blackbox_exporter.host }}"
+        port: "{{ prometheus.blackbox_exporter.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          env: "{{ env }}"
+        checks:
+          - id: "blackbox_exporter_check"
+            name: "Prometheus exporter for Blackbox metrics"
+            http: "http://{{ prometheus.blackbox_exporter.host }}:{{ prometheus.blackbox_exporter.port }}"
+            interval: "20s"
+      - name: node-exporter
+        host: "{{ prometheus.node_exporter.host }}"
+        port: "{{ prometheus.node_exporter.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          env: "{{ env }}"
+        checks:
+          - id: "node_exporter_check"
+            name: "Prometheus exporter for Node metrics"
+            http: "http://{{ prometheus.node_exporter.host }}:{{ prometheus.node_exporter.port }}"
+            interval: "20s"
+      - name: cadvisor-exporter
+        host: "{{ prometheus.cadvisor_exporter.host }}"
+        port: "{{ prometheus.cadvisor_exporter.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          env: "{{ env }}"
+        checks:
+          - id: "cadvisor_exporter_check"
+            name: "Prometheus exporter for Cadvisor metrics"
+            http: "http://{{ prometheus.cadvisor_exporter.host }}:{{ prometheus.cadvisor_exporter.port }}"
+            interval: "20s"
+      - name: docker-exporter
+        host: "{{ prometheus.docker_exporter.host }}"
+        port: "{{ prometheus.docker_exporter.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          env: "{{ env }}"
+        checks:
+          - id: "docker_exporter_check"
+            name: "Prometheus exporter for Docker engine metrics"
+            http: "http://{{ prometheus.docker_exporter.host }}:{{ prometheus.docker_exporter.port }}/metrics"
+            interval: "20s"
+
+  - name: traefik
+    entries:
+      - name: traefik-exporter
+        host: "{{ traefik.exporter.host }}"
+        port: "{{ traefik.exporter.port }}"
+        tags:
+          - "{{ env }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          env: "{{ env }}"

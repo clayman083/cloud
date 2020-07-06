@@ -7,6 +7,10 @@
 
   services_dir: /opt/services
 
+domain: clayman.pro
+
+timezone: 'Asia/Yekaterinburg'
+
 
   # Users settings
   users:

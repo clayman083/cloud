@@ -47,16 +47,7 @@
   tasks:
     - name: Generate htpasswd for traefik
       htpasswd: path={{ item.path }} name={{ item.name }} password={{ item.password }}
-      with_items:
-        - path: "{{ traefik.conf_dir }}/consul.htpasswd"
-          name: consul
-          password: consul
-        - path: "{{ traefik.conf_dir }}/prometheus.htpasswd"
-          name: prometheus
-          password: prometheus
-        - path: "{{ traefik.conf_dir }}/alertmanager.htpasswd"
-          name: alertmanager
-          password: alertmanager
+      with_items: "{{ traefik_credentials }}"
       tags:
         - traefik
 
@@ -73,10 +64,3 @@
 
   roles:
     - role: grafana
-
-
-- hosts: secrets
-  become: true
-
-  roles:
-    - role: vault

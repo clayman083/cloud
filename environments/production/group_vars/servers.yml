@@ -1,5 +1,255 @@
 ---
 
+# Common settings
 private_network: "{{ ansible_eth1['ipv4'] }}"
-public_network: "{{ ansible_eth1['ipv4'] }}"
+public_network: "{{ ansible_eth0['ipv4'] }}"
 docker_network: "{{ ansible_docker0['ipv4'] }}"
+
+
+# Consul settings
+consul:
+  service: consul.service.consul
+
+  dnsmasq_conf_dir: /etc/dnsmasq.d
+  service_dir: "{{ services_dir }}/consul"
+  conf_dir: "{{ services_dir }}/consul/conf.d"
+
+  host: "{{ private_network.address }}"
+  port: 8500
+
+  agent:
+    server: true
+
+    datacenter: dev
+    node: "{{ ansible_hostname }}"
+
+    encrypt: "{{ lookup('file', '{{ credentials_path }}/services/consul/consul.encrypt') }}"
+
+    servers: "{{ groups['service-discovery'] }}"
+
+  container:
+    image: consul:1.7
+    name: consul
+    restart: always
+    networks:
+      - name: backend
+
+    syslog:
+      enabled: true
+      host: unixgram:///dev/log
+      tag: consul
+
+  exporter:
+    enabled: true
+
+    host: "{{ private_network.address }}"
+    port: 9107
+
+    container:
+      image: prom/consul-exporter:v0.6.0
+      name: consul_exporter
+      dns: "{{ private_network.address }}"
+      networks:
+        - name: backend
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: consul_exporter
+
+
+# Loki settings
+loki:
+  dir: "{{ services_dir }}/loki"
+
+  server:
+    enabled: true
+    host: "{{ private_network.address }}"
+    port: 3100
+
+    container:
+      image: grafana/loki:v1.3.0
+      name: loki
+      dns: "{{ private_network.address }}"
+      networks:
+        - name: backend
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: loki
+
+    exporter:
+      host: "{{ private_network.address }}"
+      port: 3100
+
+  promtail:
+    host: "{{ private_network.address }}"
+    port: 9080
+
+    loki:
+      host: "{{ hostvars[groups['logging'][0]]['private_network']['address'] }}"
+      port: 3100
+
+    syslog:
+      host: "{{ private_network.address }}"
+      port: 1514
+
+    jobs:
+      syslog:
+        labels:
+          tier: "{{ env }}"
+      static: []
+        # - name: postgresql
+        #   labels:
+        #     job: postgresql
+        #     hostname: "{{ ansible_hostname }}"
+        #     tier: "{{ env }}"
+        #   path: /var/log/postgresql/postgresql-11-main.log
+
+    container:
+      image: grafana/promtail:v1.3.0
+      name: promtail
+      dns: "{{ private_network.address }}"
+      networks:
+        - name: backend
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: promtail
+
+
+# Prometheus settings
+prometheus:
+  dir: "{{ services_dir }}/prometheus"
+  rules_dir: "{{ services_dir }}/prometheus/rules.d"
+
+  node_exporter:
+    host: "{{ private_network.address }}"
+    port: 9100
+
+    container:
+      image: prom/node-exporter:v0.18.1
+      name: node_exporter
+      dns: "{{ private_network.address }}"
+      networks:
+        - name: backend
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: node_exporter
+
+  blackbox_exporter:
+    enabled: false
+
+    host: "{{ private_network.address }}"
+    port: 9115
+
+    targets:
+      - "http://{{ domain }}"
+      - "http://consul.{{ domain }}"
+      - "http://grafana.{{ domain }}"
+
+    container:
+      image: prom/blackbox-exporter:v0.14.0
+      name: blackbox_exporter
+      dns: "{{ private_network.address }}"
+      networks:
+        - name: backend
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: blackbox_exporter
+
+  cadvisor_exporter:
+    host: "{{ private_network.address }}"
+    port: 8800
+
+    container:
+      image: gcr.io/google-containers/cadvisor:v0.34.0
+      name: cadvisor_exporter
+      dns: "{{ private_network.address }}"
+      networks:
+        - name: backend
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: cadvisor_exporter
+
+  docker_exporter:
+    host: "{{ private_network.address }}"
+    port: 9323
+
+  server:
+    enabled: true
+
+    host: "{{ private_network.address }}"
+    port: 9090
+
+    storage_retention: 90d
+
+    exporters:
+      - blackbox-exporter
+      - cadvisor-exporter
+      - docker-exporter
+      - loki-exporter
+      - node-exporter
+      - postgresql-exporter
+      - promtail-exporter
+      - traefik-exporter
+
+    services:
+      - apollo
+      - passport
+      - wallet
+
+    rules:
+      - node.rules.yml
+
+    container:
+      image: prom/prometheus:v2.15.2
+      name: prometheus
+      dns: "{{ private_network.address }}"
+      networks:
+        - name: backend
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: prometheus
+
+  alertmanager:
+    enabled: false
+
+    host: "{{ private_network.address }}"
+    port: 9093
+
+    container:
+      name: alertmanager
+      image: prom/alertmanager:v0.20.0
+      dns: "{{ private_network.address }}"
+      networks:
+        - name: backend
+      restart: always
+
+      syslog:
+        enabled: true
+        host: unixgram:///dev/log
+        tag: alertmanager
+
+    slack:
+      enabled: no
+      api_url: ''
+      channel: 'general'
+      username: 'Prometheus'
