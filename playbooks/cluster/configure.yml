@@ -22,34 +22,49 @@
 - hosts: servers
   become: true
 
+  collections:
+    - clayman083.cluster
+
   roles:
     - role: dnsmasq
     - role: consul
+
     - role: prometheus
     - role: loki
+    - role: grafana
+      when: grafana_enabled|default(False)
 
   tasks:
-    - name: Add exporter to Consul Catalog
+    - name: Add services to Consul Catalog
       import_role:
         name: consul
         tasks_from: services
-      when: services|default(False)
       tags:
         - consul
 
 
-- hosts: loadbalancers
+- hosts: lb
   become: true
+
+  collections:
+    - clayman083.cluster
 
   roles:
     - role: traefik
+      when: traefik_enabled|default(False)
 
   tasks:
-    - name: Generate htpasswd for traefik
-      htpasswd: path={{ item.path }} name={{ item.name }} password={{ item.password }}
-      with_items: "{{ traefik_credentials }}"
+    - name: Add services to Consul Catalog
+      import_role:
+        name: consul
+        tasks_from: services
+      vars:
+        services:
+          - name: traefik
+            entries:
+              - "{{ traefik_exporter_service }}"
       tags:
-        - traefik
+        - consul
 
 
 - hosts: databases
@@ -59,8 +74,9 @@
     - role: postgresql
 
 
-- hosts: monitoring
+- hosts: secrets
   become: true
 
   roles:
-    - role: grafana
+    - role: vault
+

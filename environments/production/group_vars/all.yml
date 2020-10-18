@@ -1,21 +1,17 @@
 ---
 
-  # Common settings
-  env: production
+# Common settings
+credentials_path: "{{ inventory_dir }}/.credentials"
 
-  credentials_path: "{{ inventory_dir }}/.credentials"
-
-  services_dir: /opt/services
-
-domain: clayman.pro
+services_dir: /opt/services
 
 timezone: 'Asia/Yekaterinburg'
 
 
-  # Users settings
-  users:
-    - name: clayman
-      group: clayman
-      sudoer: true
-    - name: backups
-      group: backups
+# Users settings
+users:
+  - name: clayman
+    group: clayman
+    sudoer: true
+  - name: backups
+    group: backups
