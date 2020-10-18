@@ -15,9 +15,15 @@
       - tmux
       - zsh
       - python-passlib
-      - python-pip
-      - python-setuptools
+      - python3-pip
     update_cache: yes
+  tags:
+    - common
+
+- name: Install python packages
+  pip:
+    name:
+      - jsondiff
   tags:
     - common
 
