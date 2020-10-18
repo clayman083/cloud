@@ -1,4 +1,0 @@
----
-- import_tasks: docker.yml
-  tags:
-    - wallet
