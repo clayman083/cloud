@@ -19,10 +19,13 @@ jobs:
           architecture: 'x64'
 
       - name: Install requirements
+        run: pip install poetry
+
+      - name: Prepare environment
         env:
           ANSIBLE_COLLECTIONS_PATH: ./.collections:~/.ansible/collections:/usr/share/ansible/collections
           ANSIBLE_ROLES_PATH: ./.roles:~/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles
         run: make install
 
       - name: Run linter
-        run: poetry run ansible-lint playbooks/cluster/configure.yml
+        run: poetry run ansible-lint --exclude=./.roles --exclude=./.collections playbooks/cluster/configure.yml
