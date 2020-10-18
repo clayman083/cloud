@@ -7,7 +7,7 @@
     swarm_tokens_path: "{{ credentials_path }}/services/swarm"
 
   tasks:
-    - name: Add exporter to Consul Catalog
+    - name: Create swarm
       import_role:
         name: docker
         tasks_from: swarm
