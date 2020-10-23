@@ -7,8 +7,6 @@ credentials_path: "{{ inventory_dir }}/.credentials"
 
 services_dir: /opt/services
 
-projects_dir: /home/{{ ansible_user }}/Developer
-
 domain: dev.clayman.pro
 
 timezone: 'Asia/Yekaterinburg'
@@ -19,10 +17,6 @@ users:
   - name: clayman
     group: clayman
     sudoer: true
-  - name: backups
-    group: backups
-  - name: travis
-    group: travis
 
 
 # Certificates settings
@@ -40,13 +34,6 @@ certificates:
       domains:
         - "{{ domain }}"
         - "consul.{{ domain }}"
-
-    - name: vault
-      path: domains/vault
-      days: 365
-      domains:
-        - "{{ domain }}"
-        - "vault.{{ domain }}"
 
     - name: prometheus
       path: domains/prometheus
@@ -68,6 +55,13 @@ certificates:
       domains:
         - "{{ domain }}"
         - "apollo.{{ domain }}"
+
+    - name: shortner
+      path: domains/shortner
+      days: 365
+      domains:
+        - "{{ domain }}"
+        - "short.{{ domain }}"
 
     - name: passport
       path: domains/passport

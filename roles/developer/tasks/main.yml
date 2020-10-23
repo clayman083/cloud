@@ -1,0 +1,42 @@
+---
+
+# TODO: Configure Vault access
+# TODO: Configure autoenv
+
+- name: Prepare developer directory
+  file: path={{ developer_dir }} state=directory mode=0755
+
+- name: Add git config
+  template: src={{ item.src }}.j2 dest=/home/{{ ansible_user }}/{{ item.dest }} mode=0644
+  with_items:
+    - src: gitconfig
+      dest: .gitconfig
+    - src: gitignore
+      dest: .gitignore_global
+  tags:
+    - git
+
+- name: Add developer to group docker
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
+  become: true
+  tags:
+    - docker
+
+- import_tasks: python.yml
+  tags:
+    - python
+
+- name: Install python 3.9
+  shell:
+    cmd: "/home/{{ ansible_user }}/.pyenv/bin/pyenv install {{ python_version }}"
+    creates: "/home/{{ ansible_user }}/.pyenv/versions/{{ python_version }}/bin/python3"
+  tags:
+    - python
+
+- import_tasks: github.yml
+  tags:
+    - github
+

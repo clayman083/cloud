@@ -1,0 +1,29 @@
+---
+
+- name: Generate SSH key for Github
+  openssh_keypair:
+    path: "/home/{{ ansible_user }}/.ssh/github"
+
+- name: Read SSH public key to authorize
+  shell: cat /home/{{ ansible_user }}/.ssh/github.pub
+  register: ssh_pub_key
+
+- name: Authorize key with Github
+  local_action:
+    module: github_key
+    name: Access Key for Developer machine
+    token: '{{ github_token }}'
+    pubkey: '{{ ssh_pub_key.stdout }}'
+
+- name: Create ssh config file
+  file: path=/home/{{ ansible_user }}/.ssh/config state=touch mode=0644
+
+- name: Add ssh config for Github
+  blockinfile:
+    path: /home/{{ ansible_user }}/.ssh/config
+    block: |
+      Host github.com
+        User clayman083
+        StrictHostKeyChecking no
+        PreferredAuthentications publickey
+        IdentityFile ~/.ssh/github

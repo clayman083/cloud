@@ -17,8 +17,6 @@
       - xz-utils
       - zlib1g-dev
   become: true
-  tags:
-    - python
 
 - name: Install python packages
   pip:
@@ -26,23 +24,17 @@
       - poetry
       - tox
   become: true
-  tags:
-    - python
 
 - name: Configure poetry
   shell: poetry config {{ item }}
   with_items:
     - "virtualenvs.in-project true"
-  tags:
-    - python
 
 - name: Install pyenv
   git:
     repo: https://github.com/pyenv/pyenv.git
     dest: /home/{{ ansible_user }}/.pyenv
     update: no
-  tags:
-    - python
 
 - name: Configure shell
   blockinfile:
@@ -54,5 +46,3 @@
       if command -v pyenv 1>/dev/null 2>&1; then
         eval "$(pyenv init -)"
       fi
-  tags:
-    - python
