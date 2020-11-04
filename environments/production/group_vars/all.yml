@@ -7,6 +7,9 @@ services_dir: /opt/services
 
 timezone: 'Asia/Yekaterinburg'
 
+# Credentials settings
+keys_dir: "{{ lookup('env','HOME') }}/.ssh/nodes/micro"
+nodes: "{{ groups['servers'] }}"
 
 # Users settings
 users:

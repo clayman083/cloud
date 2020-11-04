@@ -2,21 +2,8 @@
 
 - hosts: localhost
 
-  tasks:
-    - name: Prepare folders
-      file: path="{{ item }}" state=directory
-      with_items:
-        - "{{ credentials_path }}/services/consul"
-      tags:
-        - consul
-
-    - name: Generate consul encrypt
-      shell: openssl rand -base64 32 > consul.encrypt
-      args:
-        chdir: "{{ credentials_path }}/services/consul"
-        creates: consul.encrypt
-      tags:
-        - consul
+  roles:
+    - role: credentials
 
 
 - hosts: servers
