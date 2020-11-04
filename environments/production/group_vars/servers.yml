@@ -72,10 +72,23 @@ grafana_host: "{{ private_network.address }}"
 
 
 # Traefik settings
-traefik_image: traefik:v2.3.1
-traefik_insecure_host: "{{ public_network.address }}"
-traefik_secure_host: "{{ public_network.address }}"
-traefik_exporter_host: "{{ private_network.address }}"
+traefik_image: traefik:v2.3.2
+traefik_entry_points:
+  web:
+    name: web
+    host: "{{ public_network.address }}"
+    internal_port: 80
+    external_port: 80
+  websecure:
+    name: websecure
+    host: "{{ public_network.address }}"
+    internal_port: 443
+    external_port: 443
+  exporter:
+    name: exporter
+    host: "{{ private_network.address }}"
+    internal_port: 8800
+    external_port: 8800
 
 traefik_access_log_enabled: false
 

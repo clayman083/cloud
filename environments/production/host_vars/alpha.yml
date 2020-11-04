@@ -124,11 +124,14 @@ traefik_letsencrypt: true
 traefik_letsencrypt_email: dev@clayman.pro
 
 traefik_basic_auth:
-  - name: "{{ lookup('hashivault', 'services/consul/users/consul', 'user', mount_point='/secrets', version=2) }}"
+  - service: consul
+    name: "{{ lookup('hashivault', 'services/consul/users/consul', 'user', mount_point='/secrets', version=2) }}"
     password: "{{ lookup('hashivault', 'services/consul/users/consul', 'password', mount_point='/secrets', version=2) }}"
-  - name: "{{ lookup('hashivault', 'services/prometheus/users/prometheus', 'user', mount_point='/secrets', version=2) }}"
+  - service: prometheus
+    name: "{{ lookup('hashivault', 'services/prometheus/users/prometheus', 'user', mount_point='/secrets', version=2) }}"
     password: "{{ lookup('hashivault', 'services/prometheus/users/prometheus', 'password', mount_point='/secrets', version=2) }}"
-  - name: "{{ lookup('hashivault', 'services/alertmanager/users/alertmanager', 'user', mount_point='/secrets', version=2) }}"
+  - service: alertmanager
+    name: "{{ lookup('hashivault', 'services/alertmanager/users/alertmanager', 'user', mount_point='/secrets', version=2) }}"
     password: "{{ lookup('hashivault', 'services/alertmanager/users/alertmanager', 'password', mount_point='/secrets', version=2) }}"
 
 
