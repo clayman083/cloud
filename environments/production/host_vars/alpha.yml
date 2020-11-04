@@ -66,6 +66,8 @@ prometheus_container_dns_servers:
 prometheus_container_networks:
   - name: backend
 
+# Minio settings
+minio_enabled: true
 
 # Loki settings
 loki_enabled: true
@@ -76,10 +78,13 @@ loki_container_networks:
 loki_boltdb_storage: true
 loki_filesystem_storage: true
 
+loki_aws_storage: true
+loki_aws_storage_s3: "s3://{{ minio_access_key }}:{{ minio_secret_key }}@s3.{{ domain }}/logs"
+
 loki_schema_configs:
-  - from: 2020-10-01
+  - from: 2020-11-01
     store: boltdb
-    object_store: filesystem
+    object_store: aws
     schema: v11
     index:
       prefix: index_
@@ -288,6 +293,36 @@ services:
   - name: promtail
     entries:
       - "{{ promtail_exporter_service }}"
+
+  - name: minio
+    entries:
+      - name: minio
+        host: "{{ minio_host }}"
+        port: "{{ minio_port }}"
+        tags:
+          - "{{ tier }}"
+          - "traefik.enable=true"
+          - "traefik.http.routers.minio.rule=Host(`s3.{{ domain }}`)"
+          - "traefik.http.routers.minio.entrypoints=web"
+          - "traefik.http.routers.minio.service=minio"
+          - "traefik.http.routers.minio.middlewares=minio-redirect@consulcatalog"
+
+          - "traefik.http.middlewares.minio-redirect.redirectscheme.scheme=https"
+          - "traefik.http.middlewares.minio-redirect.redirectscheme.permanent=true"
+
+          - "traefik.http.routers.minio-secure.rule=Host(`s3.{{ domain }}`)"
+          - "traefik.http.routers.minio-secure.entrypoints=websecure"
+          - "traefik.http.routers.minio-secure.service=minio"
+          - "traefik.http.routers.minio-secure.tls=true"
+          - "traefik.http.routers.minio-secure.tls.certresolver={{ traefik_letsencrypt_resolver }}"
+        meta:
+          hostname: "{{ ansible_hostname }}"
+          tier: "{{ tier }}"
+        checks:
+          - id: "minio_server_check"
+            name: "Minio servers healtcheck"
+            http: "http://{{ minio_host }}:{{ minio_port }}/minio/health/live"
+            interval: "20s"
 
   - name: grafana
     entries:

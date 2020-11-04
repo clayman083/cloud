@@ -13,9 +13,14 @@
     - clayman083.cluster
 
   roles:
+    # Service discovery
     - role: dnsmasq
     - role: consul
 
+    - role: minio
+      when: minio_enabled|default(False)
+
+    #  Monitoring
     - role: prometheus
     - role: loki
     - role: grafana
