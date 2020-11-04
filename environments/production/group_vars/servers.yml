@@ -27,7 +27,7 @@ consul_host: "{{ private_network.address }}"
 consul_image: consul:1.8.4
 
 consul_agent_datacenter: dev
-consul_agent_encrypt: "{{ lookup('file', '{{ credentials_path }}/services/consul/consul.encrypt') }}"
+consul_agent_encrypt: "{{ lookup('hashivault', 'services/consul/server', 'encrypt', mount_point='/secrets', version=2) }}"
 consul_agent_servers: "{{ groups['service_discovery'] }}"
 
 consul_exporter_image: prom/consul-exporter:v0.7.1
