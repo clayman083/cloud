@@ -2,7 +2,7 @@
 
 collections:
   - name: clayman083.cluster
-    version: 1.0.1
+    version: 1.1.1
     source: https://galaxy.ansible.com
 
 roles:
