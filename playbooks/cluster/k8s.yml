@@ -1,0 +1,68 @@
+---
+
+- hosts: localhost
+
+  tasks:
+    - name: Create .kube directory
+      file: path="{{ ansible_user_dir }}/.kube" state=directory mode=0755
+
+- hosts: servers
+  become: true
+
+  collections:
+    - clayman083.cluster
+
+  roles:
+    - role: k8s
+
+
+- hosts: master
+
+  collections:
+    - clayman083.cluster
+
+  tasks:
+    - name: Init k8s cluster
+      import_role:
+        name: k8s
+        tasks_from: master
+      become: true
+      tags:
+        - k8s
+
+    - name: Download admin.conf to user's kube config
+      fetch: src=/root/.kube/config dest={{ hostvars['localhost'].ansible_user_dir }}/.kube/config flat=yes
+      become: true
+      tags:
+        - k8s
+
+    - name: Get join command
+      shell: kubeadm token create --print-join-command
+      register: join_command_raw
+      when: groups['workers']|length > 0
+      become: true
+      tags:
+        - k8s
+
+    - name: Set join command
+      set_fact:
+        join_command: "{{ join_command_raw.stdout_lines[0] }}"
+      when: groups['workers']|length > 0
+      tags:
+        - k8s
+
+
+- hosts: workers
+  become: yes
+
+  collections:
+    - clayman083.cluster
+
+  tasks:
+    - import_role:
+        name: k8s
+        tasks_from: workers
+      become: true
+      vars:
+        - join_command: "{{ hostvars['master'].join_command }} >> node_joined.txt"
+      tags: k8s
