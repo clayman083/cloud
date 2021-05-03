@@ -14,8 +14,10 @@
       - net-tools
       - tmux
       - zsh
-      - python-passlib
+      - python3-passlib
+      - python3-setuptools
       - python3-pip
+      - sudo 
     update_cache: yes
   tags:
     - common
